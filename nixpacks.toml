@@ -1,0 +1,12 @@
+[variables]
+NIXPACKS_PHP_ROOT_DIR = "."
+
+[phases.setup]
+nixPkgs = [
+  "php83",
+  "php83Packages.composer",
+  "(php83.withExtensions ({ enabled, all }: enabled ++ [ all.pdo_pgsql all.pgsql ]))"
+]
+
+[start]
+cmd = "php -S 0.0.0.0:${PORT:-8080} -t ."

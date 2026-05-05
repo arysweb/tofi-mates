@@ -25,10 +25,18 @@ try {
     <link rel="stylesheet" href="assets/css/user-panel.css">
 </head>
 <body>
-    <main class="user-panel">
-        <aside class="floating-sidebar"></aside>
-        <section class="content-area"><?= htmlspecialchars($dbStatusText, ENT_QUOTES, 'UTF-8'); ?></section>
-    </main>
+    <div class="page-shell">
+        <section class="top-section">
+            <div class="top-section-col"></div>
+            <div class="top-section-col"></div>
+            <div class="top-section-col"></div>
+        </section>
+
+        <main class="user-panel">
+            <aside class="floating-sidebar"></aside>
+            <section class="content-area"><?= htmlspecialchars($dbStatusText, ENT_QUOTES, 'UTF-8'); ?></section>
+        </main>
+    </div>
 
     <script src="assets/js/user-panel.js"></script>
 </body>

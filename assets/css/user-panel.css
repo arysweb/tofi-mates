@@ -16,6 +16,7 @@
     --layout-gap: 20px;
     --radius-panel: 20px;
     --sidebar-width: 400px;
+    --top-section-height: 90px;
 
 }
 
@@ -44,12 +45,34 @@ body {
 
 .user-panel {
     width: 100%;
-    height: calc(100vh - (var(--layout-margin) * 2));
+    height: 100%;
+    min-height: 0;
     margin: 0;
     padding: 0;
     display: grid;
     grid-template-columns: var(--sidebar-width) minmax(0, 1fr);
     gap: var(--layout-gap);
+}
+
+.page-shell {
+    width: 100%;
+    height: calc(100vh - (var(--layout-margin) * 2));
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr);
+    gap: var(--layout-gap);
+}
+
+.top-section {
+    width: 100%;
+    min-height: var(--top-section-height);
+    padding: var(--layout-padding) 0;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: var(--layout-gap);
+}
+
+.top-section-col {
+    min-height: 100%;
 }
 
 .floating-sidebar,
