@@ -7,3 +7,6 @@ credentials.json
 secrets.json
 *.pem
 *.key
+
+# Database dumps and local schema files should not be committed
+*.sql

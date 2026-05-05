@@ -1,0 +1,98 @@
+.courses {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 16px;
+}
+
+.course-card {
+    position: relative;
+    overflow: hidden;
+    min-height: 222px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 20px;
+    border-radius: 28px;
+    background: #ffffff;
+    box-shadow: 0 14px 34px rgba(83, 67, 33, 0.07);
+    transition:
+        transform 180ms var(--ease),
+        box-shadow 180ms var(--ease);
+}
+
+.course-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 22px 42px rgba(83, 67, 33, 0.12);
+}
+
+.course-card::after {
+    content: "";
+    position: absolute;
+    right: -38px;
+    bottom: -42px;
+    width: 122px;
+    height: 122px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.44);
+}
+
+.course-card.math {
+    background: linear-gradient(145deg, #9fe9bf, #35c77a);
+}
+
+.course-card.logic {
+    background: linear-gradient(145deg, #c6b8ff, #a98bff);
+}
+
+.course-card.time {
+    background: linear-gradient(145deg, #aad7ff, #74b8ff);
+}
+
+.course-card.money {
+    background: linear-gradient(145deg, #ffd68f, #ffb35f);
+}
+
+.course-icon {
+    width: 56px;
+    height: 56px;
+    display: grid;
+    place-items: center;
+    border-radius: 20px;
+    color: var(--ink);
+    font: 900 1.4rem/1 "Baloo 2", cursive;
+    background: rgba(255, 250, 240, 0.82);
+}
+
+.course-card h3 {
+    position: relative;
+    z-index: 1;
+    margin: 26px 0 8px;
+    font: 800 1.65rem/0.98 "Baloo 2", cursive;
+    letter-spacing: -0.03em;
+}
+
+.course-card p {
+    position: relative;
+    z-index: 1;
+    margin: 0;
+    color: rgba(41, 37, 31, 0.74);
+    font-weight: 800;
+    line-height: 1.35;
+}
+
+.progress-bar {
+    position: relative;
+    z-index: 1;
+    height: 9px;
+    overflow: hidden;
+    margin-top: 18px;
+    border-radius: 999px;
+    background: rgba(255, 250, 240, 0.62);
+}
+
+.progress-bar span {
+    display: block;
+    height: 100%;
+    border-radius: inherit;
+    background: #29251f;
+}

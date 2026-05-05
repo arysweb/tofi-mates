@@ -1,0 +1,137 @@
+.streak-card {
+    color: #fffaf0;
+    background:
+        radial-gradient(circle at top right, rgba(255, 217, 95, 0.38), transparent 10rem),
+        linear-gradient(145deg, #2d3b2f, #17231a);
+}
+
+.streak-number {
+    margin: 6px 0 0;
+    font: 800 clamp(4.3rem, 7vw, 6.2rem)/0.86 "Baloo 2", cursive;
+    letter-spacing: -0.06em;
+}
+
+.streak-card p {
+    color: rgba(255, 250, 240, 0.72);
+}
+
+.badge-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 18px;
+}
+
+.badge {
+    padding: 8px 10px;
+    border-radius: 999px;
+    color: #1d2d20;
+    font-size: 0.82rem;
+    font-weight: 900;
+    background: #fff3b5;
+}
+
+.task-list {
+    display: grid;
+    gap: 12px;
+}
+
+.task {
+    display: grid;
+    grid-template-columns: 48px 1fr auto;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    border-radius: 20px;
+    background: #ffffff;
+    box-shadow: 0 10px 24px rgba(83, 67, 33, 0.06);
+}
+
+.task-mark {
+    width: 48px;
+    height: 48px;
+    display: grid;
+    place-items: center;
+    border-radius: 17px;
+    font-weight: 900;
+    background: var(--surface-strong);
+}
+
+.task strong,
+.task span {
+    display: block;
+}
+
+.task strong {
+    font-size: 0.98rem;
+}
+
+.task span {
+    color: var(--muted);
+    font-size: 0.84rem;
+    font-weight: 800;
+}
+
+.task button {
+    min-height: 40px;
+    padding: 0 14px;
+    border: 0;
+    border-radius: 999px;
+    color: #fffaf0;
+    font-size: 0.85rem;
+    font-weight: 900;
+    background: var(--green);
+    transition:
+        transform 160ms var(--ease),
+        background-color 160ms var(--ease);
+}
+
+.task button:hover {
+    transform: translateY(-2px);
+    background: var(--green-dark);
+}
+
+.weekly-grid {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    gap: 10px;
+}
+
+.day {
+    min-height: 112px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 8px;
+    border-radius: 22px;
+    color: var(--muted);
+    font-weight: 900;
+    background: #ffffff;
+}
+
+.day.done {
+    color: var(--ink);
+    background: var(--surface-strong);
+}
+
+.day.today {
+    color: #fffaf0;
+    background: var(--green);
+    box-shadow: 0 16px 30px rgba(53, 199, 122, 0.24);
+}
+
+.day-circle {
+    width: 42px;
+    height: 42px;
+    display: grid;
+    place-items: center;
+    border-radius: 50%;
+    color: var(--ink);
+    background: rgba(41, 37, 31, 0.08);
+}
+
+.today .day-circle {
+    color: #1c3a27;
+    background: #fffaf0;
+}
