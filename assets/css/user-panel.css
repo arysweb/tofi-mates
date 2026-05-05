@@ -1,0 +1,73 @@
+:root {
+    --cream: #f8fafb;
+    --black: #2d3436;
+    --gray: #636e72;
+    --light-gray: #dfe6e9;
+    --pink: #e84393;
+    --blue: #0984e3;
+    --green: #00b894;
+    --orange: #f39c12;
+    --brown: #a9684c;
+    --font-family-main: "Bricolage Grotesque", sans-serif;
+    --font-weight-light: 200;
+    --font-weight-extra-bold: 800;
+    --layout-margin: 10px;
+    --layout-padding: 30px;
+    --layout-gap: 20px;
+    --radius-panel: 20px;
+    --sidebar-width: 400px;
+
+}
+
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+}
+
+html,
+body {
+    width: 100%;
+    height: 100%;
+}
+
+body {
+    margin: 0;
+    padding: var(--layout-margin);
+    font-family: var(--font-family-main);
+    font-weight: var(--font-weight-light);
+    background: var(--cream);
+    color: var(--black);
+    overflow-x: hidden;
+}
+
+.user-panel {
+    width: 100%;
+    min-height: calc(100vh - (var(--layout-margin) * 2));
+    margin: 0;
+    padding: var(--layout-padding);
+    display: grid;
+    grid-template-columns: var(--sidebar-width) minmax(0, 1fr);
+    gap: var(--layout-gap);
+}
+
+.floating-sidebar,
+.content-area {
+    background: var(--cream);
+    border: 1px solid color-mix(in srgb, var(--gray) 20%, var(--cream));
+    box-shadow: 0 10px 24px color-mix(in srgb, var(--black) 10%, transparent);
+}
+
+.floating-sidebar {
+    border-radius: var(--radius-panel);
+    position: sticky;
+    top: calc(var(--layout-margin) + var(--layout-padding));
+    height: calc(100vh - ((var(--layout-margin) * 2) + (var(--layout-padding) * 2)));
+}
+
+.content-area {
+    border-radius: var(--radius-panel);
+    min-height: calc(100vh - ((var(--layout-margin) * 2) + (var(--layout-padding) * 2)));
+    font-weight: var(--font-weight-extra-bold);
+}
+
