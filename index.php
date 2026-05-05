@@ -6,8 +6,7 @@ $dbStatusText = 'DB ERROR | not tested';
 require_once __DIR__ . '/api/db.php';
 
 try {
-    $pdo = getDbConnection();
-    $row = $pdo->query('SELECT current_database() AS db_name')->fetch();
+    $row = getDbHealthRow();
     $dbName = $row['db_name'] ?? 'unknown';
     $dbStatusText = 'DB OK | database=' . $dbName;
 } catch (Throwable $e) {

@@ -62,6 +62,29 @@ function getDbConnection(): PDO
         return $pdo;
     }
 
+    if (!extension_loaded('pdo_pgsql')) {
+        throw new RuntimeException('pdo_pgsql is not installed in this runtime.');
+    }
+
+    $cfg = getDbConfig();
+    $dsn = sprintf(
+        'pgsql:host=%s;port=%s;dbname=%s;sslmode=%s',
+        $cfg['host'],
+        $cfg['port'],
+        $cfg['dbName'],
+        $cfg['sslMode']
+    );
+
+    $pdo = new PDO($dsn, $cfg['user'], $cfg['pass'], [
+        PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+        PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+    ]);
+
+    return $pdo;
+}
+
+function getDbConfig(): array
+{
     loadDotEnvFromProjectParent();
 
     $databaseUrl = getenv('DATABASE_URL') ?: '';
@@ -93,12 +116,68 @@ function getDbConnection(): PDO
         throw new RuntimeException('PostgreSQL env vars are missing (DATABASE_URL or PG* vars).');
     }
 
-    $dsn = sprintf('pgsql:host=%s;port=%s;dbname=%s;sslmode=%s', $host, $port, $dbName, $sslMode);
+    return [
+        'host' => $host,
+        'port' => $port,
+        'dbName' => $dbName,
+        'user' => $user,
+        'pass' => $pass,
+        'sslMode' => $sslMode,
+    ];
+}
 
-    $pdo = new PDO($dsn, $user, $pass, [
-        PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-        PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-    ]);
+function getDbHealthRow(): array
+{
+    $cfg = getDbConfig();
 
-    return $pdo;
+    if (extension_loaded('pdo_pgsql')) {
+        $dsn = sprintf(
+            'pgsql:host=%s;port=%s;dbname=%s;sslmode=%s',
+            $cfg['host'],
+            $cfg['port'],
+            $cfg['dbName'],
+            $cfg['sslMode']
+        );
+
+        $pdo = new PDO($dsn, $cfg['user'], $cfg['pass'], [
+            PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+            PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+        ]);
+
+        $row = $pdo->query('SELECT current_database() AS db_name, now() AS server_time')->fetch();
+        return is_array($row) ? $row : [];
+    }
+
+    if (function_exists('pg_connect')) {
+        $connString = sprintf(
+            'host=%s port=%s dbname=%s user=%s password=%s sslmode=%s',
+            $cfg['host'],
+            $cfg['port'],
+            $cfg['dbName'],
+            $cfg['user'],
+            $cfg['pass'],
+            $cfg['sslMode']
+        );
+
+        $conn = @pg_connect($connString);
+        if ($conn === false) {
+            throw new RuntimeException('PostgreSQL connection failed via pgsql extension.');
+        }
+
+        $result = pg_query($conn, 'SELECT current_database() AS db_name, now() AS server_time');
+        if ($result === false) {
+            pg_close($conn);
+            throw new RuntimeException('PostgreSQL query failed via pgsql extension.');
+        }
+
+        $row = pg_fetch_assoc($result) ?: [];
+        pg_free_result($result);
+        pg_close($conn);
+
+        return $row;
+    }
+
+    throw new RuntimeException(
+        'PostgreSQL driver not installed. Enable pdo_pgsql or pgsql in Railway runtime.'
+    );
 }
