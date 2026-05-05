@@ -1,0 +1,9 @@
+.env
+.env.*
+!.env.example
+
+# Credentials and local secret files
+credentials.json
+secrets.json
+*.pem
+*.key
