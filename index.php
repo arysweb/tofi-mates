@@ -1,3 +1,19 @@
+<?php
+declare(strict_types=1);
+
+$dbStatusText = 'DB ERROR | not tested';
+
+require_once __DIR__ . '/api/db.php';
+
+try {
+    $pdo = getDbConnection();
+    $row = $pdo->query('SELECT current_database() AS db_name')->fetch();
+    $dbName = $row['db_name'] ?? 'unknown';
+    $dbStatusText = 'DB OK | database=' . $dbName;
+} catch (Throwable $e) {
+    $dbStatusText = 'DB ERROR | ' . $e->getMessage();
+}
+?>
 <!doctype html>
 <html lang="en">
 <head>
@@ -12,7 +28,7 @@
 <body>
     <main class="user-panel">
         <aside class="floating-sidebar"></aside>
-        <section class="content-area"></section>
+        <section class="content-area"><?= htmlspecialchars($dbStatusText, ENT_QUOTES, 'UTF-8'); ?></section>
     </main>
 
     <script src="assets/js/user-panel.js"></script>

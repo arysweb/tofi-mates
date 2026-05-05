@@ -11,7 +11,7 @@
     --font-family-main: "Bricolage Grotesque", sans-serif;
     --font-weight-light: 200;
     --font-weight-extra-bold: 800;
-    --layout-margin: 10px;
+    --layout-margin: 20px;
     --layout-padding: 30px;
     --layout-gap: 20px;
     --radius-panel: 20px;
@@ -34,6 +34,7 @@ body {
 body {
     margin: 0;
     padding: var(--layout-margin);
+    min-height: 100vh;
     font-family: var(--font-family-main);
     font-weight: var(--font-weight-light);
     background: var(--cream);
@@ -43,9 +44,9 @@ body {
 
 .user-panel {
     width: 100%;
-    min-height: calc(100vh - (var(--layout-margin) * 2));
+    height: calc(100vh - (var(--layout-margin) * 2));
     margin: 0;
-    padding: var(--layout-padding);
+    padding: 0;
     display: grid;
     grid-template-columns: var(--sidebar-width) minmax(0, 1fr);
     gap: var(--layout-gap);
@@ -61,13 +62,14 @@ body {
 .floating-sidebar {
     border-radius: var(--radius-panel);
     position: sticky;
-    top: calc(var(--layout-margin) + var(--layout-padding));
-    height: calc(100vh - ((var(--layout-margin) * 2) + (var(--layout-padding) * 2)));
+    top: 0;
+    height: 100%;
 }
 
 .content-area {
     border-radius: var(--radius-panel);
-    min-height: calc(100vh - ((var(--layout-margin) * 2) + (var(--layout-padding) * 2)));
+    min-height: 100%;
+    padding: var(--layout-padding);
     font-weight: var(--font-weight-extra-bold);
 }
 
