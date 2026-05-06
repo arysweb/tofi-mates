@@ -13,12 +13,12 @@
 
 .topbar h1 {
     margin: 0;
-    font: 800 clamp(1.65rem, 3vw, 2.6rem)/1 "Baloo 2", cursive;
+    font: 800 clamp(1.65rem, 3vw, 2.6rem)/1 "Bricolage Grotesque", sans-serif;
     letter-spacing: -0.04em;
 }
 
 .topbar p {
     margin: 5px 0 0;
     color: var(--muted);
-    font-weight: 700;
+    font-weight: 300;
 }

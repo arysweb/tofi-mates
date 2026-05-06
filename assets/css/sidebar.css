@@ -20,21 +20,19 @@
     margin-bottom: 28px;
 }
 
-.brand-mark {
+.brand-logo {
     width: 52px;
     height: 52px;
-    display: grid;
-    place-items: center;
-    border-radius: 18px;
-    color: #fffaf0;
-    font: 800 1.6rem/1 "Baloo 2", cursive;
-    background: linear-gradient(135deg, var(--green), #1eb7a1);
+    display: block;
+    border-radius: 16px;
+    object-fit: contain;
+    background: #ffffff;
     box-shadow: 0 12px 26px rgba(53, 199, 122, 0.28);
 }
 
 .brand-title {
     margin: 0;
-    font: 800 1.35rem/1 "Baloo 2", cursive;
+    font: 800 1.35rem/1 "Bricolage Grotesque", sans-serif;
     letter-spacing: -0.02em;
 }
 
@@ -42,7 +40,7 @@
     margin: 2px 0 0;
     color: var(--muted);
     font-size: 0.86rem;
-    font-weight: 700;
+    font-weight: 300;
 }
 
 .nav-label {
@@ -91,7 +89,7 @@
     place-items: center;
     border-radius: 13px;
     color: var(--ink);
-    font-weight: 900;
+    font-weight: 800;
     background: var(--surface-strong);
 }
 

@@ -56,43 +56,69 @@ function sanitizeClientKey(mixed $value): ?string
 function generatePracticeProblemSet(string $domain, string $subtopic, string $difficulty, ?string $clientKey, bool $forceNew): array
 {
     loadDotEnvFromProjectParent();
-    $pdo = getDbConnection();
+    $pdo = null;
 
-    if (!$forceNew && $clientKey !== null) {
-        $recentSet = fetchRecentPracticeSet($pdo, $domain, $subtopic, $difficulty, $clientKey);
-
-        if ($recentSet !== null) {
-            return $recentSet;
-        }
+    try {
+        $pdo = getDbConnection();
+    } catch (Throwable $e) {
+        $pdo = null;
     }
 
-    $cachedProblems = fetchCachedProblems($pdo, $domain, $subtopic, $difficulty);
+    if ($pdo instanceof PDO) {
+        try {
+            if (!$forceNew && $clientKey !== null) {
+                $recentSet = fetchRecentPracticeSet($pdo, $domain, $subtopic, $difficulty, $clientKey);
 
-    if (count($cachedProblems) >= 3) {
-        return persistPracticeSet($pdo, $domain, $subtopic, $difficulty, array_slice($cachedProblems, 0, 3), 'cache', $clientKey);
+                if ($recentSet !== null) {
+                    return $recentSet;
+                }
+            }
+
+            $cachedProblems = fetchCachedProblems($pdo, $domain, $subtopic, $difficulty);
+
+            if (count($cachedProblems) >= 3) {
+                return persistPracticeSet($pdo, $domain, $subtopic, $difficulty, array_slice($cachedProblems, 0, 3), 'cache', $clientKey);
+            }
+        } catch (Throwable $e) {
+            $pdo = null;
+        }
     }
 
     $prompt = buildPracticePrompt($domain, $subtopic, $difficulty);
     $aiResult = callRotatingAiProvider($prompt);
     $providerName = $aiResult['provider'] ?? 'local';
     $raw = $aiResult['raw'] ?? null;
+    $problems = is_string($raw) ? parseProblemSetJson($raw) : null;
+    $finalProvider = $problems === null ? 'local' : $providerName;
+    $preparedProblems = $problems ?? fallbackPracticeProblems($domain, $subtopic, $difficulty);
 
-    if ($raw === null) {
-        $fallbacks = storeProblemsInBank($pdo, $domain, $subtopic, $difficulty, fallbackPracticeProblems($domain, $subtopic, $difficulty), $providerName);
-        return persistPracticeSet($pdo, $domain, $subtopic, $difficulty, $fallbacks, $providerName, $clientKey);
+    if ($pdo instanceof PDO) {
+        try {
+            $bankProblems = storeProblemsInBank($pdo, $domain, $subtopic, $difficulty, $preparedProblems, $finalProvider);
+
+            return persistPracticeSet($pdo, $domain, $subtopic, $difficulty, $bankProblems, $finalProvider, $clientKey);
+        } catch (Throwable $e) {
+            return buildTransientPracticeSet($preparedProblems, $finalProvider);
+        }
     }
 
-    $problems = parseProblemSetJson($raw);
-    $bankProblems = storeProblemsInBank(
-        $pdo,
-        $domain,
-        $subtopic,
-        $difficulty,
-        $problems ?? fallbackPracticeProblems($domain, $subtopic, $difficulty),
-        $problems === null ? 'local' : $providerName
-    );
+    return buildTransientPracticeSet($preparedProblems, $finalProvider);
+}
 
-    return persistPracticeSet($pdo, $domain, $subtopic, $difficulty, $bankProblems, $problems === null ? 'local' : $providerName, $clientKey);
+function buildTransientPracticeSet(array $problems, string $providerName): array
+{
+    $setId = uniqid('local_', true);
+
+    foreach ($problems as $index => &$problem) {
+        $problem['id'] = $setId . '_' . ($index + 1);
+    }
+    unset($problem);
+
+    return [
+        'set_id' => $setId,
+        'provider' => $providerName,
+        'problems' => $problems,
+    ];
 }
 
 function buildPracticePrompt(string $domain, string $subtopic, string $difficulty): string
@@ -603,6 +629,10 @@ function getPracticeGuides(): array
 
 function fallbackPracticeProblems(string $domain, string $subtopic, string $difficulty): array
 {
+    if ($domain === 'math') {
+        return generateLocalMathProblems($subtopic, $difficulty);
+    }
+
     $fallbacks = getFallbackProblemBank();
 
     $domainProblems = $fallbacks[$domain] ?? $fallbacks['math'];
@@ -615,6 +645,189 @@ function fallbackPracticeProblems(string $domain, string $subtopic, string $diff
 
         return $problem;
     }, $problems);
+}
+
+function generateLocalMathProblems(string $subtopic, string $difficulty): array
+{
+    $problems = [];
+
+    for ($index = 0; $index < 3; $index += 1) {
+        $problems[] = match ($subtopic) {
+            'restar' => generateSubtractionProblem($difficulty),
+            'comparar' => generateComparisonProblem($difficulty),
+            'problemas' => generateWordProblem($difficulty),
+            default => generateAdditionProblem($difficulty),
+        };
+    }
+
+    return $problems;
+}
+
+function generateAdditionProblem(string $difficulty): array
+{
+    if ($difficulty === 'hard') {
+        $first = random_int(30, 70);
+        $second = random_int(10, 25);
+        $third = random_int(2, 12);
+        $answer = $first + $second - $third;
+
+        return localProblem(
+            '¿Cuánto es ' . $first . ' + ' . $second . ' - ' . $third . '?',
+            $answer,
+            'Suma primero y después resta.',
+            $first . ' + ' . $second . ' es ' . ($first + $second) . '. Luego ' . ($first + $second) . ' - ' . $third . ' es ' . $answer . '.'
+        );
+    }
+
+    [$min, $max] = $difficulty === 'medium' ? [12, 35] : [6, 15];
+    $first = random_int($min, $max);
+    $second = random_int($difficulty === 'medium' ? 6 : 2, $difficulty === 'medium' ? 18 : 8);
+    $answer = $first + $second;
+
+    return localProblem(
+        '¿Cuánto es ' . $first . ' + ' . $second . '?',
+        $answer,
+        'Empieza en ' . $first . ' y suma ' . $second . ' más.',
+        $first . ' + ' . $second . ' es ' . $answer . '.'
+    );
+}
+
+function generateSubtractionProblem(string $difficulty): array
+{
+    if ($difficulty === 'hard') {
+        $first = random_int(50, 100);
+        $second = random_int(12, 35);
+        $third = random_int(3, 14);
+        $answer = $first - $second + $third;
+
+        return localProblem(
+            '¿Cuánto es ' . $first . ' - ' . $second . ' + ' . $third . '?',
+            $answer,
+            'Resta primero y luego suma.',
+            $first . ' - ' . $second . ' es ' . ($first - $second) . '. Luego suma ' . $third . ' y da ' . $answer . '.'
+        );
+    }
+
+    [$min, $max] = $difficulty === 'medium' ? [16, 40] : [10, 18];
+    $first = random_int($min, $max);
+    $second = random_int($difficulty === 'medium' ? 7 : 3, min($first - 2, $difficulty === 'medium' ? 19 : 9));
+    $answer = $first - $second;
+
+    return localProblem(
+        '¿Cuánto es ' . $first . ' - ' . $second . '?',
+        $answer,
+        'Quita ' . $second . ' desde ' . $first . '.',
+        $first . ' - ' . $second . ' es ' . $answer . '.'
+    );
+}
+
+function generateComparisonProblem(string $difficulty): array
+{
+    if ($difficulty === 'hard') {
+        $leftA = random_int(20, 55);
+        $leftB = random_int(5, 25);
+        $rightA = random_int(30, 75);
+        $rightB = random_int(4, 20);
+        $left = $leftA + $leftB;
+        $right = $rightA - $rightB;
+        $correct = $left === $right ? 'Son iguales' : ($left > $right ? $leftA . ' + ' . $leftB : $rightA . ' - ' . $rightB);
+        $explanation = $leftA . ' + ' . $leftB . ' es ' . $left . '. ' . $rightA . ' - ' . $rightB . ' es ' . $right . '. '
+            . ($left === $right ? 'Son iguales.' : 'El mayor es ' . max($left, $right) . '.');
+
+        return [
+            'question' => '¿Qué resultado es mayor: ' . $leftA . ' + ' . $leftB . ' o ' . $rightA . ' - ' . $rightB . '?',
+            'type' => 'multiple_choice',
+            'options' => [$leftA . ' + ' . $leftB, $rightA . ' - ' . $rightB, 'Son iguales', 'No se puede saber'],
+            'correct_answer' => $correct,
+            'hint' => 'Calcula las dos operaciones antes de comparar.',
+            'explanation' => $explanation,
+        ];
+    }
+
+    [$min, $max] = $difficulty === 'medium' ? [10, 40] : [4, 18];
+    $first = random_int($min, $max);
+    $second = random_int($min, $max);
+
+    while ($first === $second) {
+        $second = random_int($min, $max);
+    }
+
+    $answer = max($first, $second);
+
+    return localProblem(
+        '¿Qué número es mayor: ' . $first . ' o ' . $second . '?',
+        $answer,
+        'El mayor aparece después al contar.',
+        $answer . ' es mayor porque vale más que el otro número.'
+    );
+}
+
+function generateWordProblem(string $difficulty): array
+{
+    $names = ['Ana', 'Leo', 'Mia', 'Noa'];
+    $items = ['pegatinas', 'canicas', 'lápices', 'flores'];
+    $name = $names[array_rand($names)];
+    $item = $items[array_rand($items)];
+
+    if ($difficulty === 'hard') {
+        $start = random_int(20, 55);
+        $added = random_int(8, 24);
+        $removed = random_int(3, 15);
+        $answer = $start + $added - $removed;
+
+        return localProblem(
+            $name . ' tiene ' . $start . ' ' . $item . ', recibe ' . $added . ' y usa ' . $removed . '. ¿Cuántas le quedan?',
+            $answer,
+            'Primero suma lo que recibe. Después quita lo que usa.',
+            $start . ' + ' . $added . ' es ' . ($start + $added) . '. Luego quedan ' . $answer . '.'
+        );
+    }
+
+    $start = random_int($difficulty === 'medium' ? 12 : 6, $difficulty === 'medium' ? 28 : 14);
+    $added = random_int($difficulty === 'medium' ? 5 : 2, $difficulty === 'medium' ? 14 : 7);
+    $answer = $start + $added;
+
+    return localProblem(
+        $name . ' tiene ' . $start . ' ' . $item . ' y recibe ' . $added . ' más. ¿Cuántas tiene?',
+        $answer,
+        'Junta las dos cantidades.',
+        $start . ' + ' . $added . ' es ' . $answer . '.'
+    );
+}
+
+function localProblem(string $question, int $answer, string $hint, string $explanation): array
+{
+    return [
+        'question' => $question,
+        'type' => 'multiple_choice',
+        'options' => buildNumberOptions($answer),
+        'correct_answer' => (string) $answer,
+        'hint' => $hint,
+        'explanation' => $explanation,
+    ];
+}
+
+function buildNumberOptions(int $answer): array
+{
+    $options = [(string) $answer];
+    $offsets = [-2, -1, 1, 2, 3, -3, 4, -4];
+    shuffle($offsets);
+
+    foreach ($offsets as $offset) {
+        $candidate = $answer + $offset;
+
+        if ($candidate >= 0 && !in_array((string) $candidate, $options, true)) {
+            $options[] = (string) $candidate;
+        }
+
+        if (count($options) === 4) {
+            break;
+        }
+    }
+
+    shuffle($options);
+
+    return $options;
 }
 
 function getFallbackProblemBank(): array

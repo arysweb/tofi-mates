@@ -1,8 +1,8 @@
 (function () {
     const difficultyPanel = document.querySelector("[data-mates-difficulty]");
     const practiceShell = document.querySelector("[data-practice='true']");
-    const difficultyStorageKey = "sparkle_mates_difficulty";
-    const clientKeyStorageKey = "sparkle_client_key";
+    const difficultyStorageKey = "panda_mates_difficulty";
+    const clientKeyStorageKey = "panda_client_key";
     const practiceSetTtlMs = 30 * 60 * 1000;
 
     if (difficultyPanel) {
@@ -51,7 +51,7 @@
             clientKey: getClientKey(),
         };
         const practiceStorageKey = [
-            "sparkle_practice_set",
+            "panda_practice_set",
             state.domain,
             state.subtopic,
             state.difficulty,

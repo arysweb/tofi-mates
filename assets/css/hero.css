@@ -50,7 +50,7 @@
     border-radius: 999px;
     color: #215332;
     font-size: 0.78rem;
-    font-weight: 900;
+    font-weight: 800;
     letter-spacing: 0.08em;
     text-transform: uppercase;
     background: rgba(255, 255, 255, 0.7);
@@ -67,7 +67,7 @@
 .hero h2 {
     max-width: 760px;
     margin: 0;
-    font: 800 4.5rem/0.88 "Baloo 2", cursive;
+    font: 800 4.5rem/0.88 "Bricolage Grotesque", sans-serif;
     letter-spacing: -0.065em;
 }
 
@@ -76,7 +76,7 @@
     margin: 20px 0 28px;
     color: #514b41;
     font-size: clamp(1rem, 1.6vw, 1.2rem);
-    font-weight: 700;
+    font-weight: 300;
     line-height: 1.62;
 }
 
@@ -95,7 +95,7 @@
     gap: 10px;
     padding: 0 22px;
     border-radius: 999px;
-    font-weight: 900;
+    font-weight: 800;
     transition:
         transform 160ms var(--ease),
         box-shadow 160ms var(--ease),
@@ -151,7 +151,7 @@
 
 .challenge-card small {
     color: var(--muted);
-    font-weight: 900;
+    font-weight: 800;
     letter-spacing: 0.08em;
     text-transform: uppercase;
 }
@@ -159,7 +159,7 @@
 .challenge-card strong {
     display: block;
     margin-top: 8px;
-    font: 800 1.55rem/1.05 "Baloo 2", cursive;
+    font: 800 1.55rem/1.05 "Bricolage Grotesque", sans-serif;
 }
 
 .answer-row {
@@ -174,7 +174,7 @@
     display: grid;
     place-items: center;
     border-radius: 15px;
-    font-weight: 900;
+    font-weight: 800;
     background: #ffffff;
 }
 

@@ -17,18 +17,18 @@
 
 .panel-header h2 {
     margin: 0;
-    font: 800 clamp(1.6rem, 2.2vw, 2.2rem)/1 "Baloo 2", cursive;
+    font: 800 clamp(1.6rem, 2.2vw, 2.2rem)/1 "Bricolage Grotesque", sans-serif;
     letter-spacing: -0.03em;
 }
 
 .panel-header p {
     margin: 6px 0 0;
     color: var(--muted);
-    font-weight: 700;
+    font-weight: 300;
 }
 
 .text-link {
     color: var(--green-dark);
-    font-weight: 900;
+    font-weight: 800;
     white-space: nowrap;
 }

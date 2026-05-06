@@ -29,7 +29,7 @@
 .page-hero h2 {
     max-width: 780px;
     margin: 12px 0 12px;
-    font: 800 clamp(2.7rem, 5vw, 5.4rem)/0.88 "Baloo 2", cursive;
+    font: 800 clamp(2.7rem, 5vw, 5.4rem)/0.88 "Bricolage Grotesque", sans-serif;
     letter-spacing: -0.06em;
 }
 
@@ -38,7 +38,7 @@
     margin: 0;
     color: var(--muted);
     font-size: clamp(1rem, 1.4vw, 1.16rem);
-    font-weight: 800;
+    font-weight: 300;
     line-height: 1.55;
 }
 
@@ -79,7 +79,7 @@
 .hero-play-card small,
 .reward-total-card small {
     color: var(--green-dark);
-    font-weight: 900;
+    font-weight: 800;
     letter-spacing: 0.08em;
     text-transform: uppercase;
 }
@@ -87,7 +87,7 @@
 .hero-play-card strong {
     display: block;
     margin: 10px 0 6px;
-    font: 800 2rem/0.98 "Baloo 2", cursive;
+    font: 800 2rem/0.98 "Bricolage Grotesque", sans-serif;
     letter-spacing: -0.04em;
 }
 
@@ -103,7 +103,7 @@
     padding: 0 14px;
     border-radius: 999px;
     color: #fffaf0;
-    font-weight: 900;
+    font-weight: 800;
     background: var(--green);
 }
 
@@ -131,14 +131,14 @@
 
 .difficulty-panel h2 {
     margin: 0;
-    font: 800 1.45rem/1 "Baloo 2", cursive;
+    font: 800 1.45rem/1 "Bricolage Grotesque", sans-serif;
     letter-spacing: -0.03em;
 }
 
 .difficulty-panel p {
     margin: 4px 0 0;
     color: var(--muted);
-    font-weight: 800;
+    font-weight: 300;
 }
 
 .difficulty-options {
@@ -154,7 +154,7 @@
     border: 2px solid rgba(41, 37, 31, 0.1);
     border-radius: 999px;
     color: var(--ink);
-    font-weight: 900;
+    font-weight: 800;
     background: #ffffff;
     box-shadow: 0 10px 24px rgba(83, 67, 33, 0.06);
     transition:
@@ -218,14 +218,14 @@
     display: grid;
     place-items: center;
     border-radius: 18px;
-    font: 900 1.25rem/1 "Baloo 2", cursive;
+    font: 800 1.25rem/1 "Bricolage Grotesque", sans-serif;
     background: var(--surface-strong);
 }
 
 .subtopic-card h3,
 .big-badge h3 {
     margin: 18px 0 8px;
-    font: 800 1.45rem/1 "Baloo 2", cursive;
+    font: 800 1.45rem/1 "Bricolage Grotesque", sans-serif;
     letter-spacing: -0.03em;
 }
 
@@ -233,7 +233,7 @@
 .big-badge p {
     margin: 0;
     color: var(--muted);
-    font-weight: 800;
+    font-weight: 300;
     line-height: 1.42;
 }
 
@@ -248,7 +248,7 @@
     border-radius: 999px;
     color: #fffaf0;
     font-size: 0.85rem;
-    font-weight: 900;
+    font-weight: 800;
     background: var(--green);
     transition:
         transform 160ms var(--ease),
@@ -294,7 +294,7 @@
     padding: 14px 16px;
     border-radius: 18px;
     color: var(--ink);
-    font-weight: 900;
+    font-weight: 800;
     background: #ffffff;
 }
 
@@ -307,7 +307,7 @@
 .sample-question strong {
     display: block;
     margin-bottom: 16px;
-    font: 800 1.32rem/1.12 "Baloo 2", cursive;
+    font: 800 1.32rem/1.12 "Bricolage Grotesque", sans-serif;
 }
 
 .rewards-hero {
@@ -346,13 +346,13 @@
 
 .reward-total-card strong {
     margin: 8px 0 2px;
-    font: 800 clamp(3.5rem, 6vw, 5.8rem)/0.9 "Baloo 2", cursive;
+    font: 800 clamp(3.5rem, 6vw, 5.8rem)/0.9 "Bricolage Grotesque", sans-serif;
     letter-spacing: -0.06em;
 }
 
 .reward-total-card span {
     color: rgba(41, 37, 31, 0.72);
-    font-weight: 900;
+    font-weight: 300;
 }
 
 .achievement-list {
@@ -366,7 +366,7 @@
     gap: 12px;
     padding: 14px;
     border-radius: 18px;
-    font-weight: 900;
+    font-weight: 800;
     background: #ffffff;
 }
 
@@ -403,7 +403,7 @@
     place-items: center;
     border-radius: 20px;
     color: rgba(41, 37, 31, 0.52);
-    font-weight: 900;
+    font-weight: 800;
     background: var(--surface-strong);
 }
 
@@ -423,7 +423,7 @@
     justify-content: space-between;
     gap: 16px;
     color: var(--muted);
-    font-weight: 900;
+    font-weight: 800;
 }
 
 .practice-question-card {
@@ -457,7 +457,7 @@
     margin-bottom: 10px;
     color: var(--green-dark);
     font-size: 0.78rem;
-    font-weight: 900;
+    font-weight: 800;
     letter-spacing: 0.08em;
     text-transform: uppercase;
 }
@@ -466,7 +466,7 @@
     max-width: 820px;
     min-height: 52px;
     margin: 0 0 14px;
-    font: 800 clamp(1.35rem, 2vw, 2rem)/1.08 "Baloo 2", cursive;
+    font: 800 clamp(1.35rem, 2vw, 2rem)/1.08 "Bricolage Grotesque", sans-serif;
     letter-spacing: -0.03em;
 }
 
@@ -482,7 +482,7 @@
     border: 0;
     border-radius: 18px;
     color: var(--ink);
-    font: 900 clamp(1rem, 1.4vw, 1.18rem)/1 "Baloo 2", cursive;
+    font: 800 clamp(1rem, 1.4vw, 1.18rem)/1 "Bricolage Grotesque", sans-serif;
     background: #ffffff;
     box-shadow: 0 12px 30px rgba(83, 67, 33, 0.08);
     transition:
@@ -514,7 +514,7 @@
     padding: 14px 16px;
     border-radius: 18px;
     color: var(--ink);
-    font-weight: 900;
+    font-weight: 300;
     line-height: 1.45;
     background: rgba(53, 199, 122, 0.12);
 }
@@ -527,7 +527,7 @@
 .answer-feedback strong {
     display: block;
     margin-bottom: 8px;
-    font: 900 1.12rem/1 "Baloo 2", cursive;
+    font: 800 1.12rem/1 "Bricolage Grotesque", sans-serif;
 }
 
 .answer-feedback ul {
@@ -550,7 +550,7 @@
     border: 0;
     border-radius: 999px;
     color: #fffaf0;
-    font-weight: 900;
+    font-weight: 800;
     background: var(--green);
 }
 
@@ -566,14 +566,14 @@
     border: 0;
     border-radius: 999px;
     color: var(--ink);
-    font-weight: 900;
+    font-weight: 800;
     background: var(--surface-strong);
 }
 
 .hint-panel > p {
     margin: 0;
     color: var(--muted);
-    font-weight: 800;
+    font-weight: 300;
     line-height: 1.5;
 }
 
@@ -592,7 +592,7 @@
     gap: 8px;
     text-align: center;
     color: var(--muted);
-    font-weight: 900;
+    font-weight: 800;
 }
 
 .progress-bars strong {
@@ -628,14 +628,14 @@
     display: grid;
     place-items: center;
     border-radius: 17px;
-    font-weight: 900;
+    font-weight: 800;
     background: var(--surface-strong);
 }
 
 .history-list em {
     color: var(--muted);
     font-style: normal;
-    font-weight: 900;
+    font-weight: 300;
 }
 
 @media (max-width: 1180px) {

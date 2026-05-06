@@ -1,8 +1,8 @@
 <aside class="sidebar" aria-label="Navegación de aprendizaje">
     <div class="brand">
-        <div class="brand-mark">S</div>
+        <img class="brand-logo" src="assets/img/logo.png" alt="Panda">
         <div>
-            <p class="brand-title">Sparkle</p>
+            <p class="brand-title">Panda</p>
             <p class="brand-subtitle">Pequeños logros cada día</p>
         </div>
     </div>
