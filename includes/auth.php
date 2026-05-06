@@ -176,7 +176,13 @@ function authRegister(array $payload): array
     authCheckHoneypot($payload);
 
     $email = authNormalizeEmail($payload['email'] ?? '');
-    $displayName = authNormalizeDisplayName($payload['display_name'] ?? '');
+    $firstName = authNormalizeDisplayName($payload['first_name'] ?? '');
+    $lastName = authNormalizeDisplayName($payload['last_name'] ?? '');
+    $legacyDisplayName = authNormalizeDisplayName($payload['display_name'] ?? '');
+    $displayName = authNormalizeDisplayName(trim($firstName . ' ' . $lastName));
+    if ($displayName === '') {
+        $displayName = $legacyDisplayName;
+    }
     $password = (string) ($payload['password'] ?? '');
     $ip = authClientIp();
 

@@ -27,10 +27,17 @@
                     <input type="text" name="company" tabindex="-1" autocomplete="off">
                 </label>
 
-                <label>
-                    Nombre
-                    <input class="focus-ring" type="text" name="display_name" autocomplete="name" maxlength="120" required>
-                </label>
+                <div class="auth-name-fields">
+                    <label>
+                        Nombre
+                        <input class="focus-ring" type="text" name="first_name" autocomplete="given-name" maxlength="60" required>
+                    </label>
+
+                    <label>
+                        Apellido
+                        <input class="focus-ring" type="text" name="last_name" autocomplete="family-name" maxlength="60" required>
+                    </label>
+                </div>
 
                 <label>
                     Email

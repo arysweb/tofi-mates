@@ -121,6 +121,12 @@
     font-weight: 800;
 }
 
+.auth-name-fields {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+}
+
 .auth-form input {
     min-height: 48px;
     width: 100%;
@@ -1039,6 +1045,10 @@
 }
 
 @media (max-width: 640px) {
+    .auth-name-fields {
+        grid-template-columns: 1fr;
+    }
+
     .page-hero {
         border-radius: 26px;
     }
