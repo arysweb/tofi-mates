@@ -186,11 +186,11 @@ function authRegister(array $payload): array
     $password = (string) ($payload['password'] ?? '');
     $ip = authClientIp();
 
-    if (!authConsumeRateLimit($pdo, 'register_ip', $ip, 5, 3600, 3600)) {
+    if (!authConsumeRateLimit($pdo, 'register_ip', $ip, 10, 3600, 3600)) {
         return ['ok' => false, 'error' => 'Demasiados intentos. Prueba más tarde.'];
     }
 
-    if ($email !== '' && !authConsumeRateLimit($pdo, 'register_email', $email, 3, 3600, 3600)) {
+    if ($email !== '' && !authConsumeRateLimit($pdo, 'register_email', $email, 5, 3600, 3600)) {
         return ['ok' => false, 'error' => 'Demasiados intentos. Prueba más tarde.'];
     }
 
@@ -248,11 +248,11 @@ function authLogin(array $payload): array
     $password = (string) ($payload['password'] ?? '');
     $ip = authClientIp();
 
-    if (!authConsumeRateLimit($pdo, 'login_ip', $ip, 10, 900, 900)) {
+    if (!authConsumeRateLimit($pdo, 'login_ip', $ip, 20, 900, 900)) {
         return ['ok' => false, 'error' => 'Demasiados intentos. Prueba más tarde.'];
     }
 
-    if ($email !== '' && !authConsumeRateLimit($pdo, 'login_email', $email, 6, 900, 900)) {
+    if ($email !== '' && !authConsumeRateLimit($pdo, 'login_email', $email, 10, 900, 900)) {
         return ['ok' => false, 'error' => 'Demasiados intentos. Prueba más tarde.'];
     }
 
@@ -402,8 +402,8 @@ function authPasswordOptions(): array
 
 function authPasswordError(PDO $pdo, string $password, string $email, string $displayName): ?string
 {
-    if (strlen($password) < 12) {
-        return 'La contraseña debe tener al menos 12 caracteres.';
+    if (strlen($password) < 10) {
+        return 'La contraseña debe tener al menos 10 caracteres.';
     }
 
     if (strlen($password) > 128) {
@@ -475,7 +475,7 @@ function authUserCanLogin(array $user): bool
 function authRecordFailedLogin(PDO $pdo, string $userId, int $currentFailures): void
 {
     $nextFailures = $currentFailures + 1;
-    $lockSql = $nextFailures >= 5 ? ', locked_until = now() + interval \'15 minutes\'' : '';
+    $lockSql = $nextFailures >= 8 ? ', locked_until = now() + interval \'15 minutes\'' : '';
     $stmt = $pdo->prepare(
         'UPDATE app_users
          SET failed_login_count = :failed_login_count' . $lockSql . '

@@ -46,10 +46,10 @@
 
                 <label>
                     Contraseña
-                    <input class="focus-ring" type="password" name="password" autocomplete="new-password" minlength="12" required>
+                    <input class="focus-ring" type="password" name="password" autocomplete="new-password" minlength="10" required>
                 </label>
 
-                <p class="auth-help">Mínimo 12 caracteres y mezcla de mayúsculas, minúsculas, números o símbolos.</p>
+                <p class="auth-help">Mínimo 10 caracteres y mezcla de mayúsculas, minúsculas, números o símbolos.</p>
                 <button class="primary-button focus-ring" type="submit">Crear cuenta</button>
                 <p class="auth-status" data-auth-status role="status" aria-live="polite"></p>
             </form>
