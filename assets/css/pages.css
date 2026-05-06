@@ -46,7 +46,6 @@
     background:
         radial-gradient(circle at 10% 0%, rgba(255, 211, 95, 0.28), transparent 18rem),
         linear-gradient(145deg, rgba(255, 250, 240, 0.96), rgba(255, 246, 220, 0.84));
-    box-shadow: var(--shadow);
     backdrop-filter: blur(18px);
 }
 
@@ -192,7 +191,6 @@
         radial-gradient(circle at 82% 16%, rgba(255, 211, 95, 0.66), transparent 12rem),
         radial-gradient(circle at 75% 72%, rgba(116, 184, 255, 0.42), transparent 15rem),
         linear-gradient(145deg, rgba(159, 233, 191, 0.96), rgba(255, 246, 220, 0.92));
-    box-shadow: var(--shadow);
 }
 
 .auth-visual-card::before,

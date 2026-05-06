@@ -351,7 +351,7 @@ function authCheckHoneypot(array $payload): void
     $startedAt = (int) ($payload['form_started_at'] ?? 0);
     $now = time();
 
-    if ($startedAt <= 0 || $now - $startedAt < 2 || $now - $startedAt > 7200) {
+    if ($startedAt <= 0 || $startedAt > $now + 60 || $now - $startedAt > 7200) {
         authSendJson(['error' => AUTH_GENERIC_ERROR], 422);
     }
 }
@@ -379,8 +379,6 @@ function authEmailIsAllowed(PDO $pdo, string $email): bool
     if ($domain === '' || !str_contains($domain, '.')) {
         return false;
     }
-
-    authEnsureRealSecurityLists($pdo);
 
     $stmt = $pdo->prepare(
         'SELECT 1
@@ -447,7 +445,6 @@ function authPasswordError(PDO $pdo, string $password, string $email, string $di
 
 function authPasswordInWeakList(PDO $pdo, string $lowerPassword): bool
 {
-    authEnsureRealSecurityLists($pdo);
     $stmt = $pdo->prepare('SELECT 1 FROM weak_passwords WHERE password_hash = :hash LIMIT 1');
     $stmt->execute([':hash' => hash('sha256', $lowerPassword)]);
 
