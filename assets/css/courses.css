@@ -1,17 +1,17 @@
 .courses {
     display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 16px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 18px;
 }
 
 .course-card {
     position: relative;
     overflow: hidden;
-    min-height: 222px;
+    min-height: 270px;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-    padding: 20px;
+    padding: 24px;
     border-radius: 28px;
     background: #ffffff;
     box-shadow: 0 14px 34px rgba(83, 67, 33, 0.07);
@@ -21,8 +21,8 @@
 }
 
 .course-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 22px 42px rgba(83, 67, 33, 0.12);
+    transform: translateY(-2px);
+    box-shadow: 0 18px 36px rgba(83, 67, 33, 0.1);
 }
 
 .course-card::after {
@@ -78,6 +78,49 @@
     color: rgba(41, 37, 31, 0.74);
     font-weight: 800;
     line-height: 1.35;
+}
+
+.topic-tags {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 7px;
+    margin-top: 16px;
+}
+
+.topic-tags span {
+    padding: 6px 9px;
+    border-radius: 999px;
+    color: rgba(41, 37, 31, 0.82);
+    font-size: 0.78rem;
+    font-weight: 900;
+    background: rgba(255, 250, 240, 0.64);
+}
+
+.topic-action {
+    position: relative;
+    z-index: 1;
+    align-self: flex-start;
+    min-height: 38px;
+    display: inline-grid;
+    place-items: center;
+    margin-top: 18px;
+    padding: 0 16px;
+    border: 0;
+    border-radius: 999px;
+    color: #fffaf0;
+    font-weight: 900;
+    background: rgba(41, 37, 31, 0.88);
+    cursor: pointer;
+    transition:
+        transform 160ms var(--ease),
+        background-color 160ms var(--ease);
+}
+
+.topic-action:hover {
+    transform: translateY(-2px);
+    background: #29251f;
 }
 
 .progress-bar {

@@ -57,7 +57,7 @@
 .nav-list {
     display: grid;
     gap: 8px;
-    margin-bottom: 28px;
+    margin-bottom: 0;
 }
 
 .nav-link {
@@ -100,48 +100,3 @@
     background: var(--green);
 }
 
-.mini-card {
-    margin-top: auto;
-    padding: 18px;
-    border-radius: 24px;
-    background: linear-gradient(145deg, #293629, #1e2920);
-    color: #fffaf0;
-    box-shadow: 0 20px 50px rgba(31, 43, 32, 0.22);
-}
-
-.mini-card small {
-    color: rgba(255, 250, 240, 0.72);
-    font-weight: 800;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-}
-
-.mini-card h3 {
-    margin: 10px 0 8px;
-    font: 800 1.35rem/1.05 "Baloo 2", cursive;
-}
-
-.mini-card p {
-    margin: 0 0 16px;
-    color: rgba(255, 250, 240, 0.76);
-    font-size: 0.94rem;
-    line-height: 1.5;
-}
-
-.mini-button {
-    width: 100%;
-    min-height: 44px;
-    border: 0;
-    border-radius: 999px;
-    color: #173020;
-    font-weight: 900;
-    background: var(--yellow);
-    transition:
-        transform 160ms var(--ease),
-        background-color 160ms var(--ease);
-}
-
-.mini-button:hover {
-    transform: translateY(-2px);
-    background: #ffe981;
-}

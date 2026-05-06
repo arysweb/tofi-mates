@@ -72,8 +72,11 @@
     font-weight: 800;
 }
 
-.task button {
+.task button,
+.task a {
     min-height: 40px;
+    display: inline-grid;
+    place-items: center;
     padding: 0 14px;
     border: 0;
     border-radius: 999px;
@@ -86,7 +89,8 @@
         background-color 160ms var(--ease);
 }
 
-.task button:hover {
+.task button:hover,
+.task a:hover {
     transform: translateY(-2px);
     background: var(--green-dark);
 }

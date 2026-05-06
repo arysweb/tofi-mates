@@ -3,22 +3,22 @@
         <div class="panel-header">
             <div>
                 <h2>Racha</h2>
-                <p>Días seguidos aprendiendo</p>
+                <p>Días seguidos practicando</p>
             </div>
         </div>
         <div class="streak-number">12</div>
-        <p>Te faltan 3 días para la insignia Súper solucionadora.</p>
+        <p>Te faltan 3 días para desbloquear una nueva recompensa.</p>
         <div class="badge-row">
             <span class="badge">Pensadora rápida</span>
-            <span class="badge">Campeona de monedas</span>
+            <span class="badge">Súper constancia</span>
         </div>
     </article>
 
     <article class="panel">
         <div class="panel-header">
             <div>
-                <h2>A continuación</h2>
-                <p>Lecciones cortas listas para jugar.</p>
+                <h2>Generador rápido</h2>
+                <p>Retos listos para pedir a la IA.</p>
             </div>
         </div>
 
@@ -26,26 +26,26 @@
             <div class="task">
                 <div class="task-mark">+</div>
                 <div>
-                    <strong>Puente hasta el 20</strong>
-                    <span>6 rondas cortas de sumas</span>
+                    <strong>Mates · Restar</strong>
+                    <span>Problemas nuevos para resolver ahora</span>
                 </div>
-                <button type="button">Jugar</button>
+                <a href="index.php?page=practice&topic=math&subtopic=restar">Pedir</a>
+            </div>
+            <div class="task">
+                <div class="task-mark">?</div>
+                <div>
+                    <strong>Lógica · Series</strong>
+                    <span>La IA ajusta la dificultad al niño</span>
+                </div>
+                <a href="index.php?page=practice&topic=logic&subtopic=series">Pedir</a>
             </div>
             <div class="task">
                 <div class="task-mark">$</div>
                 <div>
-                    <strong>Cambio en la tienda de snacks</strong>
-                    <span>Encuentra las monedas que faltan</span>
+                    <strong>Dinero · Cambios</strong>
+                    <span>Ejercicios cortos con monedas</span>
                 </div>
-                <button type="button">Jugar</button>
-            </div>
-            <div class="task">
-                <div class="task-mark">12</div>
-                <div>
-                    <strong>Caza de la media hora</strong>
-                    <span>Empareja relojes e historias</span>
-                </div>
-                <button type="button">Jugar</button>
+                <a href="index.php?page=practice&topic=money&subtopic=cambio">Pedir</a>
             </div>
         </div>
     </article>

@@ -9,36 +9,14 @@
 
     <p class="nav-label">Aprender</p>
     <nav class="nav-list">
-        <a class="nav-link active focus-ring" href="#">
-            <span class="nav-icon">H</span>
-            Inicio
-        </a>
-        <a class="nav-link focus-ring" href="#">
-            <span class="nav-icon">+</span>
-            Matemáticas
-        </a>
-        <a class="nav-link focus-ring" href="#">
-            <span class="nav-icon">?</span>
-            Lógica
-        </a>
-        <a class="nav-link focus-ring" href="#">
-            <span class="nav-icon">12</span>
-            Tiempo
-        </a>
-        <a class="nav-link focus-ring" href="#">
-            <span class="nav-icon">$</span>
-            Dinero
-        </a>
-        <a class="nav-link focus-ring" href="#">
-            <span class="nav-icon">*</span>
-            Recompensas
-        </a>
+        <?php foreach ($pageRoutes as $pageKey => $route): ?>
+            <?php if (isset($route['nav']) && $route['nav'] === false) {
+                continue;
+            } ?>
+            <a class="nav-link <?php echo $currentPage === $pageKey ? 'active' : ''; ?> focus-ring" href="<?php echo $pageKey === 'home' ? 'index.php' : 'index.php?page=' . e($pageKey); ?>">
+                <span class="nav-icon"><?php echo e($route['icon']); ?></span>
+                <?php echo e($route['label']); ?>
+            </a>
+        <?php endforeach; ?>
     </nav>
-
-    <div class="mini-card">
-        <small>Misión diaria</small>
-        <h3>Consigue 3 estrellas antes de cenar.</h3>
-        <p>Completa un juego de matemáticas, un reto con relojes y un desafío con monedas.</p>
-        <button class="mini-button" type="button">Empezar misión</button>
-    </div>
 </aside>

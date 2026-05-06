@@ -2,9 +2,9 @@
     <div class="panel-header">
         <div>
             <h2>Esta semana</h2>
-            <p>Una vista tranquila del progreso para fomentar la constancia.</p>
+            <p>Seguimiento diario de práctica, recompensas y constancia.</p>
         </div>
-        <a class="text-link focus-ring" href="#">Descargar informe</a>
+        <a class="text-link focus-ring" href="index.php?page=progress">Ver informe</a>
     </div>
 
     <div class="weekly-grid" aria-label="Actividad de aprendizaje semanal">
