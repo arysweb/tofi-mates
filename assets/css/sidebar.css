@@ -108,6 +108,22 @@
     background: rgba(255, 255, 255, 0.72);
 }
 
+.sidebar-account-profile {
+    display: grid;
+    grid-template-columns: 42px minmax(0, 1fr);
+    align-items: center;
+    gap: 10px;
+}
+
+.sidebar-account-profile img {
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    object-fit: cover;
+    background: rgba(159, 233, 191, 0.34);
+    box-shadow: inset 0 0 0 1px rgba(41, 37, 31, 0.08);
+}
+
 .sidebar-account strong,
 .sidebar-account span {
     display: block;

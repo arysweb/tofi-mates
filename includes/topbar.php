@@ -5,7 +5,7 @@
     </div>
     <?php if ($currentUser !== null): ?>
         <div class="topbar-account" aria-label="Cuenta activa">
-            <span><?php echo e(substr((string) ($currentUser['display_name'] ?? 'P'), 0, 1)); ?></span>
+            <img src="<?php echo e($currentUser['avatar_url'] ?? ''); ?>" alt="" width="38" height="38" loading="lazy">
             <div>
                 <strong><?php echo e($currentUser['display_name'] ?? 'Cuenta'); ?></strong>
                 <small><?php echo e($currentUser['role'] ?? 'guardian'); ?></small>

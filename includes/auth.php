@@ -134,9 +134,34 @@ function authCurrentUser(?PDO $pdo = null): ?array
     $touch = $pdo->prepare('UPDATE auth_sessions SET last_seen_at = now() WHERE id = :id');
     $touch->execute([':id' => $user['session_id']]);
     unset($user['session_id']);
+    $user = authUserWithAvatar($user);
     $cachedUser = $user;
 
     return $cachedUser;
+}
+
+function authUserWithAvatar(array $user): array
+{
+    $user['avatar_url'] = authDiceBearAvatarUrl($user);
+
+    return $user;
+}
+
+function authDiceBearAvatarUrl(array $user): string
+{
+    $seedSource = trim((string) ($user['id'] ?? ''));
+
+    if ($seedSource === '') {
+        $seedSource = authNormalizeEmail($user['email'] ?? '');
+    }
+
+    if ($seedSource === '') {
+        $seedSource = trim((string) ($user['display_name'] ?? 'tofi-user'));
+    }
+
+    $seed = 'tofi-' . substr(hash('sha256', $seedSource), 0, 24);
+
+    return 'https://api.dicebear.com/9.x/adventurer-neutral/svg?seed=' . rawurlencode($seed);
 }
 
 function authRequireUserJson(): array
@@ -232,6 +257,7 @@ function authRegister(array $payload): array
         return ['ok' => false, 'error' => 'No se pudo crear la cuenta con esos datos.'];
     }
 
+    $user = authUserWithAvatar($user);
     authIssueSession($pdo, (string) $user['id']);
 
     return ['ok' => true, 'user' => $user];
@@ -288,6 +314,7 @@ function authLogin(array $payload): array
     authIssueSession($pdo, (string) $user['id']);
 
     unset($user['password_hash'], $user['failed_login_count'], $user['locked_until'], $user['disabled_at']);
+    $user = authUserWithAvatar($user);
 
     return ['ok' => true, 'user' => $user];
 }
@@ -588,7 +615,11 @@ function authEnsureSchema(PDO $pdo): void
     $pdo->exec('ALTER TABLE app_users ADD COLUMN IF NOT EXISTS locked_until timestamptz');
     $pdo->exec('ALTER TABLE app_users ADD COLUMN IF NOT EXISTS last_login_at timestamptz');
     $pdo->exec('ALTER TABLE app_users ADD COLUMN IF NOT EXISTS disabled_at timestamptz');
+    $pdo->exec('ALTER TABLE app_users ADD COLUMN IF NOT EXISTS avatar_url text');
     $pdo->exec('CREATE UNIQUE INDEX IF NOT EXISTS idx_app_users_email_normalized ON app_users(email_normalized)');
+    $pdo->exec('ALTER TABLE IF EXISTS practice_sets DROP COLUMN IF EXISTS learner_id');
+    $pdo->exec('DROP TABLE IF EXISTS learner_guardians CASCADE');
+    $pdo->exec('DROP TABLE IF EXISTS learners CASCADE');
     $pdo->exec(
         'CREATE TABLE IF NOT EXISTS auth_sessions (
             id uuid PRIMARY KEY DEFAULT gen_random_uuid(),

@@ -34,9 +34,12 @@
         </nav>
 
         <div class="sidebar-account">
-            <div>
-                <strong><?php echo e($currentUser['display_name'] ?? 'Cuenta'); ?></strong>
-                <span><?php echo e($currentUser['email'] ?? ''); ?></span>
+            <div class="sidebar-account-profile">
+                <img src="<?php echo e($currentUser['avatar_url'] ?? ''); ?>" alt="" width="42" height="42" loading="lazy">
+                <div>
+                    <strong><?php echo e($currentUser['display_name'] ?? 'Cuenta'); ?></strong>
+                    <span><?php echo e($currentUser['email'] ?? ''); ?></span>
+                </div>
             </div>
             <form method="post" action="api/auth-logout.php">
                 <input type="hidden" name="csrf_token" value="<?php echo e($csrfToken); ?>">
