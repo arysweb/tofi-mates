@@ -23,3 +23,41 @@
     display: grid;
     gap: 24px;
 }
+
+.app-footer {
+    grid-column: 2;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 18px;
+    padding: 18px 22px;
+    border: 1px solid rgba(255, 255, 255, 0.84);
+    border-radius: 28px;
+    color: var(--ink);
+    background: rgba(255, 250, 240, 0.78);
+    box-shadow: var(--soft-shadow);
+    backdrop-filter: blur(18px);
+}
+
+.app-footer strong {
+    display: block;
+    margin-bottom: 4px;
+}
+
+.app-footer p {
+    max-width: 820px;
+    margin: 0;
+    color: var(--muted);
+    font-weight: 300;
+    line-height: 1.5;
+}
+
+.app-footer span {
+    flex: 0 0 auto;
+    padding: 8px 12px;
+    border-radius: 999px;
+    color: #1d2d20;
+    font-size: 0.82rem;
+    font-weight: 800;
+    background: #fff3b5;
+}

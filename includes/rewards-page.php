@@ -6,7 +6,7 @@
         <div>
             <span class="eyebrow"><span class="dot"></span> Registro de práctica</span>
             <h2>Todo sale de ejercicios reales.</h2>
-            <p>Esta página resume lo que ya existe en la base de datos: grupos preparados, ejercicios guardados y respuestas.</p>
+            <p>Esta página resume lo que ya existe en la base de datos: ejercicios guardados, respuestas y aciertos reales.</p>
             <div class="hero-actions">
                 <a class="primary-button focus-ring" href="index.php?page=practice&topic=math&subtopic=sumar">Preparar reto</a>
                 <a class="secondary-button focus-ring" href="index.php">Volver al panel</a>
@@ -25,11 +25,11 @@
             <div class="panel-header">
                 <div>
                     <h2>Racha actual</h2>
-                    <p>Días seguidos con grupos preparados.</p>
+                    <p>Días seguidos con respuestas correctas.</p>
                 </div>
             </div>
             <div class="streak-number"><?php echo e($practiceStats['streak_days']); ?></div>
-            <p>Calculada desde las fechas reales de práctica.</p>
+            <p>Calculada desde las fechas reales de respuestas correctas.</p>
         </article>
 
         <article class="panel">
@@ -42,7 +42,7 @@
 
             <div class="achievement-list">
                 <?php foreach ($practiceStats['domain_counts'] as $domain => $count): ?>
-                    <div><span><?php echo e(substr(practiceDomainLabel($domain), 0, 1)); ?></span> <?php echo e($count); ?> grupos de <?php echo e(strtolower(practiceDomainLabel($domain))); ?> preparados</div>
+                    <div><span><?php echo e(substr(practiceDomainLabel($domain), 0, 1)); ?></span> <?php echo e($count); ?> aciertos de <?php echo e(strtolower(practiceDomainLabel($domain))); ?></div>
                 <?php endforeach; ?>
             </div>
         </article>
@@ -75,7 +75,7 @@
             <article class="big-badge">
                 <span>12</span>
                 <h3><?php echo e($practiceStats['week_sets']); ?> esta semana</h3>
-                <p>Grupos preparados desde el lunes.</p>
+                <p>Respuestas correctas desde el lunes.</p>
             </article>
         </div>
     </section>

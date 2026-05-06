@@ -19,11 +19,11 @@ function getPracticeStats(): array
         $stats['stored_problems'] = (int) $pdo->query('SELECT count(*) FROM problem_bank WHERE is_active = true')->fetchColumn();
         $stats['answers'] = (int) $pdo->query('SELECT count(*) FROM practice_answers')->fetchColumn();
         $stats['correct_answers'] = (int) $pdo->query('SELECT count(*) FROM practice_answers WHERE is_correct = true')->fetchColumn();
-        $stats['week_sets'] = (int) $pdo->query("SELECT count(*) FROM practice_sets WHERE created_at >= date_trunc('week', now())")->fetchColumn();
-        $stats['today_sets'] = (int) $pdo->query("SELECT count(*) FROM practice_sets WHERE created_at::date = current_date")->fetchColumn();
-        $stats['weekly_counts'] = fetchWeeklyPracticeCounts($pdo);
-        $stats['domain_counts'] = fetchDomainPracticeCounts($pdo);
-        $stats['recent_sets'] = fetchRecentPracticeSets($pdo);
+        $stats['week_sets'] = (int) $pdo->query("SELECT count(*) FROM practice_answers WHERE is_correct = true AND answered_at >= date_trunc('week', now())")->fetchColumn();
+        $stats['today_sets'] = (int) $pdo->query("SELECT count(*) FROM practice_answers WHERE is_correct = true AND answered_at::date = current_date")->fetchColumn();
+        $stats['weekly_counts'] = fetchWeeklyCorrectAnswerCounts($pdo);
+        $stats['domain_counts'] = fetchDomainCorrectAnswerCounts($pdo);
+        $stats['recent_sets'] = fetchRecentCorrectAnswers($pdo);
         $stats['streak_days'] = fetchPracticeStreakDays($pdo);
     } catch (Throwable $e) {
         $stats['db_available'] = false;
@@ -49,13 +49,14 @@ function emptyPracticeStats(): array
     ];
 }
 
-function fetchWeeklyPracticeCounts(PDO $pdo): array
+function fetchWeeklyCorrectAnswerCounts(PDO $pdo): array
 {
     $counts = [1 => 0, 2 => 0, 3 => 0, 4 => 0, 5 => 0, 6 => 0, 7 => 0];
     $stmt = $pdo->query(
-        "SELECT extract(isodow from created_at)::int AS day_number, count(*)::int AS total
-         FROM practice_sets
-         WHERE created_at >= date_trunc('week', now())
+        "SELECT extract(isodow from answered_at)::int AS day_number, count(*)::int AS total
+         FROM practice_answers
+         WHERE is_correct = true
+           AND answered_at >= date_trunc('week', now())
          GROUP BY day_number"
     );
 
@@ -66,13 +67,16 @@ function fetchWeeklyPracticeCounts(PDO $pdo): array
     return $counts;
 }
 
-function fetchDomainPracticeCounts(PDO $pdo): array
+function fetchDomainCorrectAnswerCounts(PDO $pdo): array
 {
     $counts = ['math' => 0, 'logic' => 0, 'time' => 0, 'money' => 0];
     $stmt = $pdo->query(
-        "SELECT domain_slug, count(*)::int AS total
-         FROM practice_sets
-         GROUP BY domain_slug"
+        "SELECT ps.domain_slug, count(*)::int AS total
+         FROM practice_answers pa
+         INNER JOIN practice_problems pp ON pp.id = pa.practice_problem_id
+         INNER JOIN practice_sets ps ON ps.id = pp.practice_set_id
+         WHERE pa.is_correct = true
+         GROUP BY ps.domain_slug"
     );
 
     foreach ($stmt->fetchAll() as $row) {
@@ -86,12 +90,15 @@ function fetchDomainPracticeCounts(PDO $pdo): array
     return $counts;
 }
 
-function fetchRecentPracticeSets(PDO $pdo): array
+function fetchRecentCorrectAnswers(PDO $pdo): array
 {
     $stmt = $pdo->query(
-        "SELECT domain_slug, subtopic_slug, difficulty, created_at
-         FROM practice_sets
-         ORDER BY created_at DESC
+        "SELECT ps.domain_slug, ps.subtopic_slug, ps.difficulty, pa.answered_at
+         FROM practice_answers pa
+         INNER JOIN practice_problems pp ON pp.id = pa.practice_problem_id
+         INNER JOIN practice_sets ps ON ps.id = pp.practice_set_id
+         WHERE pa.is_correct = true
+         ORDER BY pa.answered_at DESC
          LIMIT 3"
     );
 
@@ -101,8 +108,9 @@ function fetchRecentPracticeSets(PDO $pdo): array
 function fetchPracticeStreakDays(PDO $pdo): int
 {
     $rows = $pdo->query(
-        "SELECT DISTINCT created_at::date AS activity_date
-         FROM practice_sets
+        "SELECT DISTINCT answered_at::date AS activity_date
+         FROM practice_answers
+         WHERE is_correct = true
          ORDER BY activity_date DESC
          LIMIT 60"
     )->fetchAll();

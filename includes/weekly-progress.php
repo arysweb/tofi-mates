@@ -16,7 +16,7 @@ $todayNumber = (int) date('N');
     <div class="panel-header">
         <div>
             <h2>Esta semana</h2>
-            <p>Grupos de ejercicios preparados desde la base de datos.</p>
+            <p>Aciertos reales guardados esta semana.</p>
         </div>
         <a class="text-link focus-ring" href="index.php?page=progress">Ver informe</a>
     </div>

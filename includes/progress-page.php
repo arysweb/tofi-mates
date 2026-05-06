@@ -12,13 +12,13 @@ $recentSets = $practiceStats['recent_sets'];
         <div>
             <span class="eyebrow"><span class="dot"></span> Vista para familia</span>
             <h2>Pequeños avances, bien visibles.</h2>
-            <p>Resumen conectado a los grupos, ejercicios y respuestas guardadas en la base de datos.</p>
+            <p>Resumen conectado a las respuestas correctas guardadas en la base de datos.</p>
         </div>
 
         <div class="reward-total-card">
             <small>Esta semana</small>
             <strong><?php echo e($practiceStats['week_sets']); ?></strong>
-            <span>grupos preparados</span>
+            <span>aciertos reales</span>
         </div>
     </section>
 
@@ -27,7 +27,7 @@ $recentSets = $practiceStats['recent_sets'];
             <div class="panel-header">
                 <div>
                     <h2>Actividad semanal</h2>
-                    <p>Práctica por día, calculada con grupos reales.</p>
+                    <p>Práctica por día, calculada solo con respuestas correctas.</p>
                 </div>
             </div>
 
@@ -47,12 +47,12 @@ $recentSets = $practiceStats['recent_sets'];
                 <div class="panel-header">
                     <div>
                         <h2>Temas favoritos</h2>
-                        <p>Donde Mia practica más.</p>
+                        <p>Donde Mia responde correctamente más veces.</p>
                     </div>
                 </div>
                 <div class="topic-stats">
                     <?php foreach ($practiceStats['domain_counts'] as $domain => $count): ?>
-                        <span><?php echo e(practiceDomainLabel($domain)); ?> · <?php echo e($count); ?> grupos</span>
+                        <span><?php echo e(practiceDomainLabel($domain)); ?> · <?php echo e($count); ?> aciertos</span>
                     <?php endforeach; ?>
                 </div>
             </article>
@@ -73,13 +73,13 @@ $recentSets = $practiceStats['recent_sets'];
         <div class="panel-header">
             <div>
                 <h2>Historial reciente</h2>
-                <p>Últimos grupos preparados y guardados.</p>
+                <p>Últimas respuestas correctas guardadas.</p>
             </div>
         </div>
 
         <div class="history-list">
             <?php if ($recentSets === []): ?>
-                <div><span>+</span><strong>Sin grupos todavía</strong><em>Genera el primer reto</em></div>
+                <div><span>+</span><strong>Sin aciertos todavía</strong><em>Responde un reto correctamente</em></div>
             <?php endif; ?>
             <?php foreach ($recentSets as $set): ?>
                 <div>

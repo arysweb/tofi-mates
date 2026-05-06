@@ -43,7 +43,7 @@ $pageRoutes = [
     ],
     'money' => [
         'label' => 'Dinero',
-        'icon' => '$',
+        'icon' => '€',
         'include' => 'topic-page.php',
         'title' => 'Dinero en juegos.',
         'subtitle' => 'Monedas, precios y cambios con ejemplos fáciles.',
@@ -70,6 +70,14 @@ $pageRoutes = [
         'subtitle' => 'Ejercicios generados, guardados y reutilizados desde la base de datos.',
         'nav' => false,
     ],
+    'report-problem' => [
+        'label' => 'Reportar',
+        'icon' => '!',
+        'include' => 'report-page.php',
+        'title' => 'Reportar ejercicio.',
+        'subtitle' => 'Ayúdanos a revisar contenido generado por IA.',
+        'nav' => false,
+    ],
 ];
 
 $topicPages = [
@@ -86,7 +94,7 @@ $topicPages = [
             'text' => '5 preguntas suaves con números hasta 20.',
             'meta' => 'Reto corto',
         ],
-        'stats' => ['4 subtemas', $practiceStats['domain_counts']['math'] . ' grupos preparados', $practiceStats['stored_problems'] . ' ejercicios guardados'],
+        'stats' => ['4 subtemas', $practiceStats['domain_counts']['math'] . ' aciertos', $practiceStats['stored_problems'] . ' ejercicios guardados'],
         'subtopics' => [
             ['slug' => 'sumar', 'icon' => '+', 'title' => 'Sumar', 'text' => 'Operaciones rápidas, completar números y problemas de juntar.', 'pill' => 'Listo'],
             ['slug' => 'restar', 'icon' => '-', 'title' => 'Restar', 'text' => 'Quitar, comparar y encontrar lo que falta sin presión.', 'pill' => 'Popular'],
@@ -99,7 +107,7 @@ $topicPages = [
             'answers' => ['7', '9', '11'],
             'correct' => 1,
         ],
-        'daily' => $practiceStats['today_sets'] . ' grupos preparados hoy.',
+        'daily' => $practiceStats['today_sets'] . ' aciertos hoy.',
         'coach' => 'Empieza con restas si quieres un reto corto.',
     ],
     'logic' => [
@@ -115,7 +123,7 @@ $topicPages = [
             'text' => 'Busca el patrón y elige qué sigue.',
             'meta' => 'Con pistas suaves',
         ],
-        'stats' => ['4 subtemas', $practiceStats['domain_counts']['logic'] . ' grupos preparados', $practiceStats['stored_problems'] . ' ejercicios guardados'],
+        'stats' => ['4 subtemas', $practiceStats['domain_counts']['logic'] . ' aciertos', $practiceStats['stored_problems'] . ' ejercicios guardados'],
         'subtopics' => [
             ['slug' => 'series', 'icon' => '1', 'title' => 'Series', 'text' => 'Patrones de números, colores y objetos que continúan.', 'pill' => 'Visual'],
             ['slug' => 'formas', 'icon' => '◆', 'title' => 'Formas', 'text' => 'Encuentra figuras, tamaños y piezas que faltan.', 'pill' => 'Juego'],
@@ -128,7 +136,7 @@ $topicPages = [
             'answers' => ['Rojo', 'Verde', 'Azul'],
             'correct' => 0,
         ],
-        'daily' => $practiceStats['today_sets'] . ' grupos preparados hoy.',
+        'daily' => $practiceStats['today_sets'] . ' aciertos hoy.',
         'coach' => 'Las series son perfectas para calentar.',
     ],
     'time' => [
@@ -144,7 +152,7 @@ $topicPages = [
             'text' => 'Lee horas en punto y medias horas.',
             'meta' => '10 minutos',
         ],
-        'stats' => ['4 subtemas', $practiceStats['domain_counts']['time'] . ' grupos preparados', $practiceStats['stored_problems'] . ' ejercicios guardados'],
+        'stats' => ['4 subtemas', $practiceStats['domain_counts']['time'] . ' aciertos', $practiceStats['stored_problems'] . ' ejercicios guardados'],
         'subtopics' => [
             ['slug' => 'relojes', 'icon' => '12', 'title' => 'Relojes', 'text' => 'Leer horas en punto, media hora y cuartos.', 'pill' => 'Básico'],
             ['slug' => 'rutinas', 'icon' => '☀', 'title' => 'Rutinas', 'text' => 'Mañana, tarde y noche con acciones cotidianas.', 'pill' => 'Diario'],
@@ -157,15 +165,15 @@ $topicPages = [
             'answers' => ['5:15', '5:30', '6:00'],
             'correct' => 1,
         ],
-        'daily' => $practiceStats['today_sets'] . ' grupos preparados hoy.',
+        'daily' => $practiceStats['today_sets'] . ' aciertos hoy.',
         'coach' => 'Prueba relojes si quieres algo visual.',
     ],
     'money' => [
         'class' => 'money',
-        'icon' => '$',
+        'icon' => '€',
         'eyebrow' => 'Pequeñas compras',
         'title' => 'Dinero',
-        'description' => 'Monedas, precios y cambios explicados con situaciones sencillas: una merienda, una tienda o un juguete.',
+        'description' => 'Euros, precios y cambios explicados con situaciones sencillas: una merienda, una tienda o un juguete.',
         'cta' => 'Generar reto de dinero',
         'heroCard' => [
             'label' => 'Reto sugerido',
@@ -173,20 +181,20 @@ $topicPages = [
             'text' => 'Compra, paga y descubre cuánto queda.',
             'meta' => 'Vida real',
         ],
-        'stats' => ['4 subtemas', $practiceStats['domain_counts']['money'] . ' grupos preparados', $practiceStats['stored_problems'] . ' ejercicios guardados'],
+        'stats' => ['4 subtemas', $practiceStats['domain_counts']['money'] . ' aciertos', $practiceStats['stored_problems'] . ' ejercicios guardados'],
         'subtopics' => [
-            ['slug' => 'monedas', 'icon' => '$', 'title' => 'Monedas', 'text' => 'Reconocer, contar y combinar monedas.', 'pill' => 'Visual'],
+            ['slug' => 'monedas', 'icon' => '€', 'title' => 'Euros', 'text' => 'Reconocer, contar y combinar euros.', 'pill' => 'Visual'],
             ['slug' => 'precios', 'icon' => '€', 'title' => 'Precios', 'text' => 'Elegir objetos y comparar cuánto cuestan.', 'pill' => 'Precio'],
             ['slug' => 'cambio', 'icon' => '-', 'title' => 'Cambio', 'text' => 'Calcular cuánto sobra después de comprar.', 'pill' => 'Reto'],
             ['slug' => 'ahorrar', 'icon' => '+', 'title' => 'Ahorrar', 'text' => 'Juntar pequeñas cantidades para una meta.', 'pill' => 'Meta'],
         ],
         'sample' => [
             'label' => 'Vista previa',
-            'question' => 'Tienes 10 monedas y una fruta cuesta 6. ¿Cuánto te queda?',
-            'answers' => ['2', '4', '6'],
+            'question' => 'Tienes 10 € y una fruta cuesta 6 €. ¿Cuánto te queda?',
+            'answers' => ['2 €', '4 €', '6 €'],
             'correct' => 1,
         ],
-        'daily' => $practiceStats['today_sets'] . ' grupos preparados hoy.',
+        'daily' => $practiceStats['today_sets'] . ' aciertos hoy.',
         'coach' => 'Cambio es una buena práctica para hoy.',
     ],
 ];

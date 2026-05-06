@@ -12,6 +12,8 @@ const PRACTICE_SUBTOPICS = [
     'money' => ['monedas', 'precios', 'cambio', 'ahorrar'],
 ];
 const PRACTICE_DIFFICULTIES = ['easy', 'medium', 'hard'];
+const AI_PROVIDER_ATTEMPTS = 1;
+const AI_PROVIDER_TIMEOUT_SECONDS = 6;
 
 try {
     if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
@@ -69,7 +71,7 @@ function generatePracticeProblemSet(string $domain, string $subtopic, string $di
             if (!$forceNew && $clientKey !== null) {
                 $recentSet = fetchRecentPracticeSet($pdo, $domain, $subtopic, $difficulty, $clientKey);
 
-                if ($recentSet !== null) {
+                if ($recentSet !== null && practiceSetIsUsable($recentSet, $domain)) {
                     return $recentSet;
                 }
             }
@@ -89,6 +91,7 @@ function generatePracticeProblemSet(string $domain, string $subtopic, string $di
     $providerName = $aiResult['provider'] ?? 'local';
     $raw = $aiResult['raw'] ?? null;
     $problems = is_string($raw) ? parseProblemSetJson($raw) : null;
+    $problems = filterProblemsForDomain($problems, $domain);
     $finalProvider = $problems === null ? 'local' : $providerName;
     $preparedProblems = $problems ?? fallbackPracticeProblems($domain, $subtopic, $difficulty);
 
@@ -128,10 +131,12 @@ function buildPracticePrompt(string $domain, string $subtopic, string $difficult
     $subtopicGuide = $domainGuide['subtopics'][$subtopic] ?? $domainGuide['subtopics'][array_key_first($domainGuide['subtopics'])];
     $difficultyGuide = $domainGuide['difficulty'][$difficulty] ?? $domainGuide['difficulty']['easy'];
 
-    return 'Generate exactly 3 ' . $subtopicGuide . ' for a Spanish-speaking 7 or 8 year old kid. '
+    return 'Generate exactly 3 ' . $subtopicGuide . ' for a 7 or 8 year old kid in Spain. '
         . 'Subject: ' . $domainGuide['label'] . '. Difficulty: ' . $difficultyGuide . '. '
         . 'The difference between difficulties must be very pronounced. Easy must still be real practice, not baby work. Medium must require thinking. Hard must require two steps or deeper reasoning where the subject allows it. '
-        . 'Use warm, simple Spanish. Do not mention AI, backend, JSON, prompts, levels, points, stars, shops, missions, or rewards. '
+        . 'Use warm, simple Castilian Spanish from Spain. Use Spain vocabulary and spelling only. Do not use Latin American wording. '
+        . getDomainPromptRules($domain)
+        . 'Do not mention AI, backend, JSON, prompts, levels, points, stars, shops, missions, or rewards. '
         . 'Keep each question short. Keep each explanation in 2 or 3 very short sentences, with one idea per sentence. '
         . 'The explanation must explain the reasoning only; do not start it with praise like "Muy bien" or "Qué bien". '
         . 'Respond ONLY in valid JSON, no markdown, no code fences, no extra text. '
@@ -139,6 +144,65 @@ function buildPracticePrompt(string $domain, string $subtopic, string $difficult
         . '{"problems":[{"question":"...","type":"multiple_choice","options":["...","...","...","..."],"correct_answer":"...","hint":"...","explanation":"..."}]} '
         . 'Rules: problems must contain exactly 3 items; each type must be "multiple_choice"; each options array must have exactly 4 short strings; correct_answer must exactly match one option; '
         . 'hint must help without giving the answer; explanation must be encouraging and child-friendly.';
+}
+
+function getDomainPromptRules(string $domain): string
+{
+    if ($domain === 'money') {
+        return 'For money exercises, use euros and cents from Spain only. Write prices with € or euros. Never use pesos, dollars, centavos, "$", or any non-Spain currency. ';
+    }
+
+    return '';
+}
+
+function filterProblemsForDomain(?array $problems, string $domain): ?array
+{
+    if ($problems === null) {
+        return null;
+    }
+
+    if ($domain !== 'money') {
+        return $problems;
+    }
+
+    foreach ($problems as $problem) {
+        if (problemHasNonSpainMoneyTerms($problem)) {
+            return null;
+        }
+    }
+
+    return $problems;
+}
+
+function practiceSetIsUsable(array $practiceSet, string $domain): bool
+{
+    $problems = is_array($practiceSet['problems'] ?? null) ? $practiceSet['problems'] : [];
+
+    if (count($problems) !== 3) {
+        return false;
+    }
+
+    $seenQuestions = [];
+
+    foreach ($problems as $problem) {
+        if (!is_array($problem)) {
+            return false;
+        }
+
+        $question = trim((string) ($problem['question'] ?? ''));
+
+        if ($question === '' || isset($seenQuestions[$question])) {
+            return false;
+        }
+
+        if ($domain === 'money' && problemHasNonSpainMoneyTerms($problem)) {
+            return false;
+        }
+
+        $seenQuestions[$question] = true;
+    }
+
+    return true;
 }
 
 function callRotatingAiProvider(string $prompt): ?array
@@ -155,7 +219,7 @@ function callRotatingAiProvider(string $prompt): ?array
         array_slice($providers, 0, $startIndex)
     );
 
-    foreach ($orderedProviders as $provider) {
+    foreach (array_slice($orderedProviders, 0, AI_PROVIDER_ATTEMPTS) as $provider) {
         $raw = callAiProvider($provider, $prompt);
 
         if ($raw !== null) {
@@ -189,6 +253,16 @@ function getAvailableAiProviders(): array
             'type' => 'gemini',
             'apiKey' => getenv('GEMINI_API_KEY') ?: '',
             'model' => getenv('GEMINI_MODEL') ?: 'gemini-1.5-flash',
+        ];
+    }
+
+    if ((getenv('OPENROUTER_API_KEY') ?: '') !== '') {
+        $providers[] = [
+            'name' => 'openrouter',
+            'type' => 'openai_compatible',
+            'url' => getenv('OPENROUTER_API_URL') ?: 'https://openrouter.ai/api/v1/chat/completions',
+            'apiKey' => getenv('OPENROUTER_API_KEY') ?: '',
+            'model' => getenv('OPENROUTER_MODEL') ?: 'openrouter/auto',
         ];
     }
 
@@ -294,7 +368,7 @@ function postJson(string $url, array $payload, array $extraHeaders = []): ?array
         CURLOPT_POST => true,
         CURLOPT_HTTPHEADER => array_merge(['Content-Type: application/json'], $extraHeaders),
         CURLOPT_POSTFIELDS => json_encode($payload, JSON_UNESCAPED_UNICODE),
-        CURLOPT_TIMEOUT => 20,
+        CURLOPT_TIMEOUT => AI_PROVIDER_TIMEOUT_SECONDS,
     ]);
 
     $body = curl_exec($ch);
@@ -417,19 +491,41 @@ function fetchCachedProblems(PDO $pdo, string $domain, string $subtopic, string 
         ':difficulty' => $difficulty,
     ]);
 
-    return array_map(static function (array $row): array {
+    $seenQuestions = [];
+    $problems = [];
+
+    foreach ($stmt->fetchAll() as $row) {
+        $question = trim((string) $row['question']);
+
+        if ($question === '' || isset($seenQuestions[$question])) {
+            continue;
+        }
+
+        $seenQuestions[$question] = true;
         $options = json_decode((string) $row['options'], true);
 
-        return [
+        $problem = [
             'bank_id' => (string) $row['id'],
-            'question' => (string) $row['question'],
+            'question' => $question,
             'type' => (string) $row['question_type'],
             'options' => is_array($options) ? array_values(array_map('strval', $options)) : [],
             'correct_answer' => (string) $row['correct_answer'],
             'hint' => (string) $row['hint'],
             'explanation' => (string) $row['explanation'],
         ];
-    }, $stmt->fetchAll());
+
+        if ($domain === 'money' && problemHasNonSpainMoneyTerms($problem)) {
+            continue;
+        }
+
+        $problems[] = $problem;
+
+        if (count($problems) === 3) {
+            break;
+        }
+    }
+
+    return $problems;
 }
 
 function storeProblemsInBank(PDO $pdo, string $domain, string $subtopic, string $difficulty, array $problems, string $providerName): array
@@ -633,6 +729,14 @@ function fallbackPracticeProblems(string $domain, string $subtopic, string $diff
         return generateLocalMathProblems($subtopic, $difficulty);
     }
 
+    if ($domain === 'time') {
+        return generateLocalTimeProblems($subtopic, $difficulty);
+    }
+
+    if ($domain === 'money') {
+        return generateLocalMoneyProblems($subtopic, $difficulty);
+    }
+
     $fallbacks = getFallbackProblemBank();
 
     $domainProblems = $fallbacks[$domain] ?? $fallbacks['math'];
@@ -830,6 +934,347 @@ function buildNumberOptions(int $answer): array
     return $options;
 }
 
+function generateLocalTimeProblems(string $subtopic, string $difficulty): array
+{
+    $problems = [];
+
+    for ($index = 0; $index < 3; $index += 1) {
+        $problems[] = match ($subtopic) {
+            'rutinas' => generateRoutineTimeProblem($difficulty),
+            'duracion' => generateDurationProblem($difficulty),
+            'antes-despues' => generateBeforeAfterTimeProblem($difficulty),
+            default => generateClockProblem($difficulty),
+        };
+    }
+
+    return $problems;
+}
+
+function generateClockProblem(string $difficulty): array
+{
+    if ($difficulty === 'hard') {
+        $hour = random_int(1, 10);
+        $minute = [5, 10, 15, 20, 25, 35, 40, 45][array_rand([5, 10, 15, 20, 25, 35, 40, 45])];
+        $duration = [25, 35, 40, 45, 50][array_rand([25, 35, 40, 45, 50])];
+        $answer = addMinutesToTime($hour, $minute, $duration);
+        $start = formatTime($hour, $minute);
+
+        return timeProblem(
+            'El reloj marca las ' . $start . ' y pasan ' . $duration . ' minutos. ¿Qué hora marca después?',
+            $answer,
+            'Suma los minutos al reloj y cambia de hora si pasas de 60.',
+            'Empiezas en ' . $start . '. Al sumar ' . $duration . ' minutos llegas a ' . $answer . '.'
+        );
+    }
+
+    $minuteChoices = $difficulty === 'medium' ? [0, 15, 30, 45] : [0, 30];
+    $hour = random_int(1, 12);
+    $minute = $minuteChoices[array_rand($minuteChoices)];
+    $answer = formatTime($hour, $minute);
+
+    return timeProblem(
+        '¿Qué hora muestra un reloj digital que dice ' . $answer . '?',
+        $answer,
+        'Lee primero la hora y después los minutos.',
+        'El reloj ya muestra ' . $answer . '. Esa es la hora correcta.'
+    );
+}
+
+function generateRoutineTimeProblem(string $difficulty): array
+{
+    $activities = [
+        ['name' => 'desayunar', 'end' => [7, 45]],
+        ['name' => 'preparar la mochila', 'end' => [8, 10]],
+        ['name' => 'leer antes de dormir', 'end' => [20, 30]],
+        ['name' => 'hacer deberes', 'end' => [18, 15]],
+    ];
+    $activity = $activities[array_rand($activities)];
+
+    if ($difficulty === 'easy') {
+        [$hour, $minute] = $activity['end'];
+        $start = addMinutesToTime($hour, $minute, -30);
+        $end = formatTime($hour, $minute);
+
+        return [
+            'question' => 'Empiezas a ' . $activity['name'] . ' a las ' . $start . ' y terminas a las ' . $end . '. ¿Qué pasa primero?',
+            'type' => 'multiple_choice',
+            'options' => ['Empezar', 'Terminar', 'Las dos a la vez', 'No se puede saber'],
+            'correct_answer' => 'Empezar',
+            'hint' => 'Compara las dos horas.',
+            'explanation' => $start . ' ocurre antes que ' . $end . '. Por eso primero empiezas.',
+        ];
+    }
+
+    $duration = $difficulty === 'hard'
+        ? [25, 35, 45][array_rand([25, 35, 45])]
+        : [15, 20, 30][array_rand([15, 20, 30])];
+    [$endHour, $endMinute] = $activity['end'];
+    $end = formatTime($endHour, $endMinute);
+    $answer = addMinutesToTime($endHour, $endMinute, -$duration);
+
+    return timeProblem(
+        'Terminas de ' . $activity['name'] . ' a las ' . $end . '. Si tardas ' . $duration . ' minutos, ¿a qué hora empiezas?',
+        $answer,
+        'Resta la duración a la hora de terminar.',
+        'Si terminas a las ' . $end . ' y tardas ' . $duration . ' minutos, empiezas a las ' . $answer . '.'
+    );
+}
+
+function generateDurationProblem(string $difficulty): array
+{
+    $startHour = random_int(2, 7);
+    $startMinute = $difficulty === 'easy' ? 0 : [0, 15, 20, 30, 45][array_rand([0, 15, 20, 30, 45])];
+    $duration = match ($difficulty) {
+        'hard' => [35, 45, 50, 65][array_rand([35, 45, 50, 65])],
+        'medium' => [20, 30, 40, 45][array_rand([20, 30, 40, 45])],
+        default => [10, 15, 30][array_rand([10, 15, 30])],
+    };
+    $end = addMinutesToTime($startHour, $startMinute, $duration);
+    $start = formatTime($startHour, $startMinute);
+
+    return [
+        'question' => 'Empiezas a las ' . $start . ' y terminas a las ' . $end . '. ¿Cuánto tiempo pasa?',
+        'type' => 'multiple_choice',
+        'options' => buildMinuteOptions($duration),
+        'correct_answer' => $duration . ' minutos',
+        'hint' => 'Cuenta desde la hora de inicio hasta la hora final.',
+        'explanation' => 'De ' . $start . ' a ' . $end . ' pasan ' . $duration . ' minutos.',
+    ];
+}
+
+function generateBeforeAfterTimeProblem(string $difficulty): array
+{
+    $hour = random_int(1, 10);
+    $minute = $difficulty === 'easy' ? [0, 30][array_rand([0, 30])] : [0, 15, 30, 45][array_rand([0, 15, 30, 45])];
+    $base = formatTime($hour, $minute);
+    $step = $difficulty === 'hard' ? 45 : ($difficulty === 'medium' ? 30 : 15);
+    $before = addMinutesToTime($hour, $minute, -$step);
+    $after = addMinutesToTime($hour, $minute, $step);
+    $askAfter = (bool) random_int(0, 1);
+
+    return timeProblem(
+        '¿Qué hora va ' . ($askAfter ? 'después' : 'antes') . ' de las ' . $base . '?',
+        $askAfter ? $after : $before,
+        'Mueve el reloj ' . $step . ' minutos ' . ($askAfter ? 'hacia adelante.' : 'hacia atrás.'),
+        ($askAfter ? 'Después' : 'Antes') . ' de ' . $base . ' va ' . ($askAfter ? $after : $before) . '.'
+    );
+}
+
+function timeProblem(string $question, string $answer, string $hint, string $explanation): array
+{
+    return [
+        'question' => $question,
+        'type' => 'multiple_choice',
+        'options' => buildTimeOptions($answer),
+        'correct_answer' => $answer,
+        'hint' => $hint,
+        'explanation' => $explanation,
+    ];
+}
+
+function formatTime(int $hour, int $minute): string
+{
+    $normalizedHour = (($hour - 1) % 12) + 1;
+
+    return $normalizedHour . ':' . str_pad((string) $minute, 2, '0', STR_PAD_LEFT);
+}
+
+function addMinutesToTime(int $hour, int $minute, int $minutesToAdd): string
+{
+    $total = (($hour % 12) * 60) + $minute + $minutesToAdd;
+    $total = (($total % 720) + 720) % 720;
+    $newHour = intdiv($total, 60);
+    $newMinute = $total % 60;
+
+    return formatTime($newHour === 0 ? 12 : $newHour, $newMinute);
+}
+
+function buildTimeOptions(string $answer): array
+{
+    [$hour, $minute] = array_map('intval', explode(':', $answer));
+    $options = [$answer];
+    $offsets = [-30, -15, 15, 30, 45, -45, 60, -60];
+    shuffle($offsets);
+
+    foreach ($offsets as $offset) {
+        $candidate = addMinutesToTime($hour, $minute, $offset);
+
+        if (!in_array($candidate, $options, true)) {
+            $options[] = $candidate;
+        }
+
+        if (count($options) === 4) {
+            break;
+        }
+    }
+
+    shuffle($options);
+
+    return $options;
+}
+
+function buildMinuteOptions(int $answer): array
+{
+    $options = [$answer . ' minutos'];
+    $offsets = [-15, -10, 10, 15, 20, -20, 30, -30];
+    shuffle($offsets);
+
+    foreach ($offsets as $offset) {
+        $candidate = $answer + $offset;
+
+        if ($candidate > 0 && !in_array($candidate . ' minutos', $options, true)) {
+            $options[] = $candidate . ' minutos';
+        }
+
+        if (count($options) === 4) {
+            break;
+        }
+    }
+
+    shuffle($options);
+
+    return $options;
+}
+
+function generateLocalMoneyProblems(string $subtopic, string $difficulty): array
+{
+    $problems = [];
+
+    for ($index = 0; $index < 3; $index += 1) {
+        $problems[] = match ($subtopic) {
+            'precios' => generatePriceComparisonProblem($difficulty),
+            'cambio' => generateChangeProblem($difficulty),
+            'ahorrar' => generateSavingProblem($difficulty),
+            default => generateEuroCoinProblem($difficulty),
+        };
+    }
+
+    return $problems;
+}
+
+function generateEuroCoinProblem(string $difficulty): array
+{
+    if ($difficulty === 'hard') {
+        $first = random_int(12, 35);
+        $second = random_int(8, 24);
+        $spent = random_int(5, 18);
+        $answer = $first + $second - $spent;
+
+        return euroProblem(
+            'Tienes ' . $first . ' € y recibes ' . $second . ' €. Después gastas ' . $spent . ' €. ¿Cuánto dinero te queda?',
+            $answer,
+            'Suma primero lo que recibes y después resta lo que gastas.',
+            $first . ' € + ' . $second . ' € son ' . ($first + $second) . ' €. Luego quedan ' . $answer . ' €.'
+        );
+    }
+
+    [$min, $max] = $difficulty === 'medium' ? [8, 25] : [2, 12];
+    $first = random_int($min, $max);
+    $second = random_int($difficulty === 'medium' ? 4 : 1, $difficulty === 'medium' ? 15 : 8);
+    $answer = $first + $second;
+
+    return euroProblem(
+        'Tienes ' . $first . ' € y te dan ' . $second . ' € más. ¿Cuánto dinero tienes?',
+        $answer,
+        'Junta las dos cantidades de euros.',
+        $first . ' € + ' . $second . ' € son ' . $answer . ' €.'
+    );
+}
+
+function generatePriceComparisonProblem(string $difficulty): array
+{
+    $items = ['un bocadillo', 'un cuaderno', 'un zumo', 'un juguete'];
+    $firstItem = $items[array_rand($items)];
+    $secondItem = $items[array_rand($items)];
+
+    while ($secondItem === $firstItem) {
+        $secondItem = $items[array_rand($items)];
+    }
+
+    [$min, $max] = $difficulty === 'hard' ? [12, 60] : ($difficulty === 'medium' ? [6, 35] : [2, 15]);
+    $firstPrice = random_int($min, $max);
+    $secondPrice = random_int($min, $max);
+
+    while ($secondPrice === $firstPrice) {
+        $secondPrice = random_int($min, $max);
+    }
+
+    $answer = min($firstPrice, $secondPrice);
+
+    return euroProblem(
+        ucfirst($firstItem) . ' cuesta ' . $firstPrice . ' € y ' . $secondItem . ' cuesta ' . $secondPrice . ' €. ¿Cuál es el precio menor?',
+        $answer,
+        'Compara los dos precios en euros.',
+        $answer . ' € es el precio menor.'
+    );
+}
+
+function generateChangeProblem(string $difficulty): array
+{
+    $payment = match ($difficulty) {
+        'hard' => random_int(40, 90),
+        'medium' => random_int(20, 50),
+        default => random_int(8, 20),
+    };
+    $price = random_int(max(1, intdiv($payment, 3)), $payment - 1);
+    $answer = $payment - $price;
+
+    return euroProblem(
+        'Pagas con ' . $payment . ' € algo que cuesta ' . $price . ' €. ¿Cuánto cambio recibes?',
+        $answer,
+        'Resta el precio al dinero que entregas.',
+        $payment . ' € - ' . $price . ' € son ' . $answer . ' € de cambio.'
+    );
+}
+
+function generateSavingProblem(string $difficulty): array
+{
+    $goal = match ($difficulty) {
+        'hard' => random_int(45, 100),
+        'medium' => random_int(25, 60),
+        default => random_int(10, 25),
+    };
+    $saved = random_int(max(1, intdiv($goal, 3)), $goal - 2);
+    $answer = $goal - $saved;
+
+    return euroProblem(
+        'Quieres ahorrar ' . $goal . ' € y ya tienes ' . $saved . ' €. ¿Cuánto te falta?',
+        $answer,
+        'Resta lo que ya tienes al objetivo.',
+        $goal . ' € - ' . $saved . ' € son ' . $answer . ' €. Eso es lo que falta.'
+    );
+}
+
+function euroProblem(string $question, int $answer, string $hint, string $explanation): array
+{
+    return [
+        'question' => $question,
+        'type' => 'multiple_choice',
+        'options' => buildEuroOptions($answer),
+        'correct_answer' => $answer . ' €',
+        'hint' => $hint,
+        'explanation' => $explanation,
+    ];
+}
+
+function buildEuroOptions(int $answer): array
+{
+    return array_map(static fn (string $option): string => $option . ' €', buildNumberOptions($answer));
+}
+
+function problemHasNonSpainMoneyTerms(array $problem): bool
+{
+    $text = implode(' ', [
+        (string) ($problem['question'] ?? ''),
+        implode(' ', array_map('strval', is_array($problem['options'] ?? null) ? $problem['options'] : [])),
+        (string) ($problem['correct_answer'] ?? ''),
+        (string) ($problem['hint'] ?? ''),
+        (string) ($problem['explanation'] ?? ''),
+    ]);
+
+    return (bool) preg_match('/\\b(peso|pesos|d[oó]lar|d[oó]lares|centavo|centavos)\\b|\\$/iu', $text);
+}
+
 function getFallbackProblemBank(): array
 {
     return [
@@ -924,7 +1369,7 @@ function getFallbackProblemBank(): array
         'time' => [
             'easy' => [
                 'relojes' => fallbackTriplet('¿Qué hora es si el reloj marca las 3:00?', ['3:00', '4:00', '3:30', '12:00'], '3:00', 'Cuando la aguja marca el 3 y los minutos están en 00, son las 3:00.'),
-                'rutinas' => fallbackTriplet('¿Qué haces normalmente por la mañana?', ['Desayunar', 'Dormir de noche', 'Cenar', 'Ponerse pijama'], 'Desayunar', 'Desayunar suele pasar por la mañana.'),
+                'rutinas' => fallbackTriplet('Sales al cole a las 8:30 y desayunas 30 minutos antes. ¿A qué hora desayunas?', ['8:00', '8:15', '8:30', '9:00'], '8:00', '30 minutos antes de las 8:30 son las 8:00.'),
                 'duracion' => fallbackTriplet('Si juegas 10 minutos, ¿cuánto tiempo pasa?', ['5 minutos', '10 minutos', '1 hora', '30 minutos'], '10 minutos', 'La duración es el tiempo que dura la actividad. Aquí son 10 minutos.'),
                 'antes-despues' => fallbackTriplet('¿Qué va antes: comer o lavar el plato?', ['Comer', 'Lavar el plato', 'Dormir', 'Cenar'], 'Comer', 'Primero comes. Después puedes lavar el plato.'),
             ],

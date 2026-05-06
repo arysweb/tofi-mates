@@ -17,6 +17,7 @@ $pageMeta = $pageRoutes[$currentPage];
     <main class="app-shell">
         <?php require __DIR__ . '/includes/sidebar.php'; ?>
         <?php require __DIR__ . '/includes/' . $pageMeta['include']; ?>
+        <?php require __DIR__ . '/includes/footer.php'; ?>
     </main>
 </body>
 </html>

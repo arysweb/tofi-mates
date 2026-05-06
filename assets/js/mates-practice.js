@@ -1,9 +1,11 @@
 (function () {
     const difficultyPanel = document.querySelector("[data-mates-difficulty]");
     const practiceShell = document.querySelector("[data-practice='true']");
+    const reportForm = document.querySelector("[data-report-form]");
     const difficultyStorageKey = "panda_mates_difficulty";
     const clientKeyStorageKey = "panda_client_key";
     const practiceSetTtlMs = 30 * 60 * 1000;
+    const reportDraftStorageKey = "panda_problem_report_draft";
 
     if (difficultyPanel) {
         setupDifficultySelector(difficultyPanel);
@@ -11,6 +13,10 @@
 
     if (practiceShell) {
         setupMatesPractice(practiceShell);
+    }
+
+    if (reportForm) {
+        setupReportForm(reportForm);
     }
 
     function setupDifficultySelector(panel) {
@@ -39,6 +45,19 @@
                 link.href = url.toString();
             });
         }
+    }
+
+    function getClientKey() {
+        const saved = localStorage.getItem(clientKeyStorageKey);
+
+        if (saved) {
+            return saved;
+        }
+
+        const key = "kid_" + Date.now().toString(36) + "_" + Math.random().toString(36).slice(2, 10);
+        localStorage.setItem(clientKeyStorageKey, key);
+
+        return key;
     }
 
     async function setupMatesPractice(shell) {
@@ -147,19 +166,6 @@
             }));
         }
 
-        function getClientKey() {
-            const saved = localStorage.getItem(clientKeyStorageKey);
-
-            if (saved) {
-                return saved;
-            }
-
-            const key = "kid_" + Date.now().toString(36) + "_" + Math.random().toString(36).slice(2, 10);
-            localStorage.setItem(clientKeyStorageKey, key);
-
-            return key;
-        }
-
         function renderProblemSet(problems) {
             if (!problemsList || !hint || !status) {
                 return;
@@ -178,6 +184,9 @@
             const card = document.createElement("article");
             card.className = "practice-problem-card";
 
+            const header = document.createElement("div");
+            header.className = "practice-card-header";
+
             const label = document.createElement("span");
             label.className = "problem-number";
             label.textContent = "Reto " + (index + 1);
@@ -193,10 +202,17 @@
 
             const hintButton = document.createElement("button");
             hintButton.type = "button";
+            hintButton.className = "hint-action";
             hintButton.textContent = "Pista";
             hintButton.addEventListener("click", () => {
                 hint.textContent = problem.hint;
             });
+
+            const reportButton = document.createElement("button");
+            reportButton.type = "button";
+            reportButton.className = "report-action";
+            reportButton.textContent = "Reportar";
+            reportButton.addEventListener("click", () => openReportPage(problem));
 
             const feedback = document.createElement("div");
             feedback.className = "answer-feedback";
@@ -211,10 +227,12 @@
             });
 
             actions.appendChild(hintButton);
-            card.appendChild(label);
+            actions.appendChild(reportButton);
+            header.appendChild(label);
+            header.appendChild(actions);
+            card.appendChild(header);
             card.appendChild(title);
             card.appendChild(answers);
-            card.appendChild(actions);
             card.appendChild(feedback);
 
             return card;
@@ -235,6 +253,7 @@
                 explanation: problem.explanation,
                 is_correct: answer === problem.correct_answer,
             };
+            problem.selected_answer = answer;
 
             if (problem.id) {
                 result = await saveAnswer(problem.id, answer, result);
@@ -248,6 +267,22 @@
             feedback.hidden = false;
             feedback.innerHTML = "";
             feedback.appendChild(buildFeedback(result));
+        }
+
+        function openReportPage(problem) {
+            sessionStorage.setItem(reportDraftStorageKey, JSON.stringify({
+                client_key: state.clientKey,
+                correct_answer: problem.correct_answer || "",
+                difficulty: state.difficulty,
+                domain: state.domain,
+                options: Array.isArray(problem.options) ? problem.options : [],
+                problem_id: problem.id || null,
+                question: problem.question || "",
+                selected_answer: problem.selected_answer || "",
+                set_id: state.setId,
+                subtopic: state.subtopic,
+            }));
+            window.location.href = "index.php?page=report-problem";
         }
 
         async function saveAnswer(problemId, answer, fallbackResult) {
@@ -337,6 +372,132 @@
                 card.innerHTML = '<span class="problem-number">Reto ' + (index + 1) + '</span><h2>Preparando ejercicio...</h2><div class="practice-answers"><button type="button" disabled></button><button type="button" disabled></button><button type="button" disabled></button><button type="button" disabled></button></div>';
                 problemsList.appendChild(card);
             }
+        }
+    }
+
+    function setupReportForm(form) {
+        const status = document.querySelector("[data-report-status]");
+        const preview = document.querySelector("[data-report-preview]");
+        const previewTitle = document.querySelector("[data-report-preview-title]");
+        const previewMeta = document.querySelector("[data-report-preview-meta]");
+        const draft = readReportDraft();
+
+        if (draft) {
+            hydrateReportForm(form, draft, preview, previewTitle, previewMeta);
+        }
+
+        form.addEventListener("submit", async (event) => {
+            event.preventDefault();
+
+            if (!draft) {
+                setReportStatus(status, "No hay ejercicio seleccionado para reportar.");
+                return;
+            }
+
+            const formData = new FormData(form);
+            const payload = {
+                client_key: getClientKey(),
+                correct_answer: formData.get("correct_answer") || "",
+                details: formData.get("details") || "",
+                difficulty: formData.get("difficulty") || "",
+                domain: formData.get("domain") || "",
+                options: parseOptions(formData.get("options")),
+                problem_id: formData.get("problem_id") || null,
+                question: formData.get("question") || "",
+                reason: formData.get("reason") || "",
+                reporter_email: formData.get("reporter_email") || "",
+                selected_answer: formData.get("selected_answer") || "",
+                set_id: formData.get("set_id") || null,
+                subtopic: formData.get("subtopic") || "",
+            };
+
+            setReportStatus(status, "Enviando reporte...");
+
+            try {
+                const response = await fetch("api/report-problem.php", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify(payload),
+                });
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.error || "Report not saved");
+                }
+
+                sessionStorage.removeItem(reportDraftStorageKey);
+                form.reset();
+                setReportStatus(status, "Reporte enviado. Gracias, lo revisaremos.");
+            } catch (error) {
+                setReportStatus(status, "No se pudo enviar el reporte ahora mismo.");
+            }
+        });
+    }
+
+    function readReportDraft() {
+        try {
+            return JSON.parse(sessionStorage.getItem(reportDraftStorageKey) || "null");
+        } catch (error) {
+            return null;
+        }
+    }
+
+    function hydrateReportForm(form, draft, preview, previewTitle, previewMeta) {
+        setFormValue(form, "question", draft.question || "");
+        setFormValue(form, "problem_id", draft.problem_id || "");
+        setFormValue(form, "set_id", draft.set_id || "");
+        setFormValue(form, "domain", draft.domain || "");
+        setFormValue(form, "subtopic", draft.subtopic || "");
+        setFormValue(form, "difficulty", draft.difficulty || "");
+        setFormValue(form, "correct_answer", draft.correct_answer || "");
+        setFormValue(form, "selected_answer", draft.selected_answer || "");
+        setFormValue(form, "options", JSON.stringify(draft.options || []));
+
+        if (previewTitle) {
+            previewTitle.textContent = draft.question || "Ejercicio seleccionado";
+        }
+
+        if (previewMeta) {
+            previewMeta.textContent = [draft.domain, draft.subtopic, draft.difficulty].filter(Boolean).join(" · ");
+        }
+
+        if (preview) {
+            preview.innerHTML = "";
+            const question = document.createElement("strong");
+            const list = document.createElement("ul");
+            question.textContent = draft.question || "Sin pregunta";
+            (Array.isArray(draft.options) ? draft.options : []).forEach((option) => {
+                const item = document.createElement("li");
+                item.textContent = option;
+                list.appendChild(item);
+            });
+            preview.appendChild(question);
+            preview.appendChild(list);
+        }
+    }
+
+    function setFormValue(form, name, value) {
+        const field = form.elements[name];
+
+        if (field) {
+            field.value = value;
+        }
+    }
+
+    function parseOptions(value) {
+        try {
+            const options = JSON.parse(String(value || "[]"));
+            return Array.isArray(options) ? options : [];
+        } catch (error) {
+            return [];
+        }
+    }
+
+    function setReportStatus(node, message) {
+        if (node) {
+            node.textContent = message;
         }
     }
 })();
