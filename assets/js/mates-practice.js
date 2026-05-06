@@ -91,6 +91,10 @@
                 return;
             }
 
+            if (forceNew) {
+                sessionStorage.removeItem(practiceStorageKey);
+            }
+
             setLoading(true);
 
             try {

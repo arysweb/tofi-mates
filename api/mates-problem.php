@@ -79,7 +79,8 @@ function generatePracticeProblemSet(string $domain, string $subtopic, string $di
                 }
             }
 
-            $cachedProblems = fetchCachedProblems($pdo, $domain, $subtopic, $difficulty);
+            $excludeBankIds = $forceNew ? fetchRecentSetBankIds($pdo, $domain, $subtopic, $difficulty, $userId) : [];
+            $cachedProblems = fetchCachedProblems($pdo, $domain, $subtopic, $difficulty, $excludeBankIds);
 
             if (count($cachedProblems) >= 3) {
                 return persistPracticeSet($pdo, $domain, $subtopic, $difficulty, array_slice($cachedProblems, 0, 3), 'cache', $clientKey, $userId);
@@ -478,23 +479,69 @@ function fetchRecentPracticeSet(PDO $pdo, string $domain, string $subtopic, stri
     return fetchPracticeSet($pdo, (string) $row['id'], (string) ($row['provider_name'] ?? 'recent'));
 }
 
-function fetchCachedProblems(PDO $pdo, string $domain, string $subtopic, string $difficulty): array
+function fetchRecentSetBankIds(PDO $pdo, string $domain, string $subtopic, string $difficulty, string $userId): array
 {
+    $stmt = $pdo->prepare(
+        'SELECT pp.cached_problem_id
+         FROM practice_problems pp
+         JOIN practice_sets ps ON ps.id = pp.practice_set_id
+         WHERE ps.user_id = :user_id
+           AND ps.domain_slug = :domain_slug
+           AND ps.subtopic_slug = :subtopic_slug
+           AND ps.difficulty = :difficulty
+         ORDER BY ps.created_at DESC
+         LIMIT 3'
+    );
+    $stmt->execute([
+        ':user_id' => $userId,
+        ':domain_slug' => $domain,
+        ':subtopic_slug' => $subtopic,
+        ':difficulty' => $difficulty,
+    ]);
+
+    $ids = [];
+
+    foreach ($stmt->fetchAll() as $row) {
+        if ($row['cached_problem_id'] !== null) {
+            $ids[] = (string) $row['cached_problem_id'];
+        }
+    }
+
+    return $ids;
+}
+
+function fetchCachedProblems(PDO $pdo, string $domain, string $subtopic, string $difficulty, array $excludeBankIds = []): array
+{
+    $excludeClause = '';
+    $params = [
+        ':domain_slug' => $domain,
+        ':subtopic_slug' => $subtopic,
+        ':difficulty' => $difficulty,
+    ];
+
+    if ($excludeBankIds !== []) {
+        $placeholders = [];
+
+        foreach ($excludeBankIds as $i => $id) {
+            $key = ':exclude_' . $i;
+            $placeholders[] = $key;
+            $params[$key] = $id;
+        }
+
+        $excludeClause = ' AND id NOT IN (' . implode(', ', $placeholders) . ')';
+    }
+
     $stmt = $pdo->prepare(
         'SELECT id, question, question_type, options, correct_answer, hint, explanation
          FROM problem_bank
          WHERE domain_slug = :domain_slug
            AND subtopic_slug = :subtopic_slug
            AND difficulty = :difficulty
-           AND is_active = true
+           AND is_active = true' . $excludeClause . '
          ORDER BY times_served ASC, last_served_at ASC NULLS FIRST, random()
          LIMIT 3'
     );
-    $stmt->execute([
-        ':domain_slug' => $domain,
-        ':subtopic_slug' => $subtopic,
-        ':difficulty' => $difficulty,
-    ]);
+    $stmt->execute($params);
 
     $seenQuestions = [];
     $problems = [];
