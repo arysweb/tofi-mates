@@ -9,8 +9,12 @@
 }
 
 @media (max-width: 920px) {
+    :root {
+        --page-margin: 14px;
+    }
+
     .app-shell {
-        width: min(100% - 28px, 760px);
+        width: min(calc(100% - (var(--page-margin) * 2)), 760px);
         grid-template-columns: 1fr;
     }
 
@@ -40,9 +44,12 @@
 }
 
 @media (max-width: 640px) {
+    :root {
+        --page-margin: 10px;
+    }
+
     .app-shell {
-        width: min(100% - 20px, 520px);
-        margin: 10px auto;
+        width: min(calc(100% - (var(--page-margin) * 2)), 520px);
         gap: 14px;
     }
 

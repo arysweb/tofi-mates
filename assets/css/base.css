@@ -17,6 +17,7 @@
     --radius-xl: 34px;
     --radius-lg: 26px;
     --radius-md: 20px;
+    --page-margin: 24px;
     --ease: cubic-bezier(0.16, 1, 0.3, 1);
 }
 
@@ -38,6 +39,10 @@ body {
         radial-gradient(circle at top left, rgba(255, 179, 95, 0.32), transparent 32rem),
         radial-gradient(circle at top right, rgba(116, 184, 255, 0.34), transparent 30rem),
         linear-gradient(135deg, #f8f4e9 0%, #eef6ef 100%);
+}
+
+.auth-page {
+    overflow: hidden;
 }
 
 h1,

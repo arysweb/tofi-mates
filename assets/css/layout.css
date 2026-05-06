@@ -1,10 +1,16 @@
 .app-shell {
-    width: min(1540px, calc(100% - 48px));
-    min-height: calc(100vh - 48px);
-    margin: 24px auto;
+    width: min(1540px, calc(100% - (var(--page-margin) * 2)));
+    min-height: calc(100vh - (var(--page-margin) * 2));
+    margin: var(--page-margin) auto;
     display: grid;
     grid-template-columns: 292px minmax(0, 1fr);
     gap: 24px;
+}
+
+.auth-app-shell {
+    grid-template-columns: minmax(0, 1fr);
+    height: calc(100vh - (var(--page-margin) * 2));
+    overflow: hidden;
 }
 
 .content {
