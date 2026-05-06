@@ -6,7 +6,7 @@ $practiceSubtopic = isset($_GET['subtopic']) ? preg_replace('/[^a-z-]/', '', $_G
 <section class="content">
     <?php require __DIR__ . '/topbar.php'; ?>
 
-    <section class="practice-shell" data-mates-practice="<?php echo $practiceTopicKey === 'math' ? 'true' : 'false'; ?>" data-subtopic="<?php echo e($practiceSubtopic); ?>" data-difficulty="<?php echo e(isset($_GET['difficulty']) ? preg_replace('/[^a-z]/', '', $_GET['difficulty']) : 'easy'); ?>">
+    <section class="practice-shell" data-practice="true" data-domain="<?php echo e($practiceTopicKey); ?>" data-subtopic="<?php echo e($practiceSubtopic); ?>" data-difficulty="<?php echo e(isset($_GET['difficulty']) ? preg_replace('/[^a-z]/', '', $_GET['difficulty']) : 'easy'); ?>">
         <div class="practice-main panel">
             <div class="practice-topline">
                 <a class="text-link focus-ring" href="index.php?page=<?php echo e($practiceTopicKey); ?>">Volver a <?php echo e($practiceTopic['title']); ?></a>
@@ -14,18 +14,21 @@ $practiceSubtopic = isset($_GET['subtopic']) ? preg_replace('/[^a-z-]/', '', $_G
             </div>
 
             <div class="practice-question-card">
-                <h2 data-problem-question><?php echo e($practiceTopic['sample']['question']); ?></h2>
-                <div class="practice-answers" data-problem-options>
-                    <?php foreach ($practiceTopic['sample']['answers'] as $answerIndex => $answer): ?>
-                        <button class="<?php echo $practiceTopic['sample']['correct'] === $answerIndex ? 'is-correct' : ''; ?>" type="button"><?php echo e($answer); ?></button>
-                    <?php endforeach; ?>
+                <div class="practice-problems-list" data-problems-list>
+                    <article class="practice-problem-card is-loading">
+                        <h2>Preparando ejercicios...</h2>
+                        <div class="practice-answers">
+                            <button type="button" disabled></button>
+                            <button type="button" disabled></button>
+                            <button type="button" disabled></button>
+                            <button type="button" disabled></button>
+                        </div>
+                    </article>
                 </div>
-                <p class="answer-feedback" data-answer-feedback hidden></p>
             </div>
 
             <div class="practice-actions">
-                <button type="button" data-show-hint>Necesito una pista</button>
-                <button type="button" data-next-problem>Siguiente reto</button>
+                <button type="button" data-next-problem>Nuevo grupo</button>
             </div>
         </div>
 
