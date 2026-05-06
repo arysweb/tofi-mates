@@ -4,13 +4,16 @@ declare(strict_types=1);
 header('Content-Type: application/json; charset=utf-8');
 
 require_once __DIR__ . '/db.php';
+require_once __DIR__ . '/../includes/auth.php';
 
 try {
     if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
         sendJson(['error' => 'Method not allowed.'], 405);
     }
 
+    $authUser = authRequireUserJson();
     $payload = readJsonPayload();
+    authVerifyCsrf($payload);
     $problemId = trim((string) ($payload['problem_id'] ?? ''));
     $selectedAnswer = trim((string) ($payload['selected_answer'] ?? ''));
 
@@ -18,7 +21,7 @@ try {
         sendJson(['error' => 'Invalid answer payload.'], 422);
     }
 
-    $result = saveMatesAnswer($problemId, $selectedAnswer);
+    $result = saveMatesAnswer($problemId, $selectedAnswer, (string) $authUser['id']);
     sendJson($result);
 } catch (Throwable $e) {
     sendJson(['error' => 'No se pudo guardar la respuesta ahora mismo.'], 500);
@@ -37,18 +40,20 @@ function isUuid(string $value): bool
     return (bool) preg_match('/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i', $value);
 }
 
-function saveMatesAnswer(string $problemId, string $selectedAnswer): array
+function saveMatesAnswer(string $problemId, string $selectedAnswer, string $userId): array
 {
     $pdo = getDbConnection();
     $pdo->beginTransaction();
 
     try {
         $problemStmt = $pdo->prepare(
-            'SELECT practice_set_id, correct_answer, explanation
-             FROM practice_problems
-             WHERE id = :id'
+            'SELECT pp.practice_set_id, pp.correct_answer, pp.explanation
+             FROM practice_problems pp
+             INNER JOIN practice_sets ps ON ps.id = pp.practice_set_id
+             WHERE pp.id = :id
+               AND ps.user_id = :user_id'
         );
-        $problemStmt->execute([':id' => $problemId]);
+        $problemStmt->execute([':id' => $problemId, ':user_id' => $userId]);
         $problem = $problemStmt->fetch();
 
         if (!is_array($problem)) {

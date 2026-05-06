@@ -13,6 +13,22 @@ $practiceStats = function_exists('getPracticeStats') ? getPracticeStats() : [
 ];
 
 $pageRoutes = [
+    'login' => [
+        'label' => 'Entrar',
+        'icon' => '→',
+        'include' => 'login-page.php',
+        'title' => 'Entrar en Panda.',
+        'subtitle' => 'Accede con tu cuenta familiar para guardar el progreso.',
+        'nav' => false,
+    ],
+    'register' => [
+        'label' => 'Crear cuenta',
+        'icon' => '+',
+        'include' => 'register-page.php',
+        'title' => 'Crear cuenta familiar.',
+        'subtitle' => 'Registra un acceso seguro para empezar a practicar.',
+        'nav' => false,
+    ],
     'home' => [
         'label' => 'Inicio',
         'icon' => 'H',

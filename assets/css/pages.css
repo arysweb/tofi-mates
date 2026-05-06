@@ -15,6 +15,124 @@
     box-shadow: var(--soft-shadow);
 }
 
+.auth-content {
+    min-height: calc(100vh - 48px);
+    align-content: center;
+}
+
+.auth-shell {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(280px, 0.45fr);
+    gap: 24px;
+    align-items: stretch;
+}
+
+.auth-card,
+.auth-side-card {
+    border: 1px solid rgba(255, 255, 255, 0.86);
+    border-radius: var(--radius-xl);
+    background:
+        radial-gradient(circle at top right, rgba(53, 199, 122, 0.16), transparent 15rem),
+        rgba(255, 250, 240, 0.84);
+    box-shadow: var(--shadow);
+    backdrop-filter: blur(18px);
+}
+
+.auth-card {
+    padding: clamp(28px, 5vw, 54px);
+}
+
+.auth-card h1 {
+    max-width: 720px;
+    margin: 12px 0 14px;
+    font: 800 clamp(2.8rem, 6vw, 6rem)/0.88 "Bricolage Grotesque", sans-serif;
+    letter-spacing: -0.06em;
+}
+
+.auth-card > p,
+.auth-side-card p,
+.auth-help,
+.auth-status {
+    color: var(--muted);
+    line-height: 1.55;
+}
+
+.auth-card > p {
+    max-width: 620px;
+    margin: 0 0 28px;
+    font-size: clamp(1rem, 1.4vw, 1.16rem);
+}
+
+.auth-form {
+    display: grid;
+    gap: 16px;
+    max-width: 520px;
+}
+
+.auth-form label:not(.auth-trap) {
+    display: grid;
+    gap: 8px;
+    color: var(--ink);
+    font-weight: 800;
+}
+
+.auth-form input {
+    min-height: 52px;
+    width: 100%;
+    border: 1px solid rgba(41, 37, 31, 0.12);
+    border-radius: 18px;
+    padding: 0 16px;
+    color: var(--ink);
+    font: inherit;
+    font-weight: 300;
+    background: rgba(255, 255, 255, 0.86);
+}
+
+.auth-form input:focus {
+    border-color: rgba(53, 199, 122, 0.6);
+}
+
+.auth-form .primary-button {
+    width: 100%;
+    margin-top: 4px;
+}
+
+.auth-form .primary-button:disabled {
+    cursor: wait;
+    opacity: 0.68;
+}
+
+.auth-help,
+.auth-status {
+    margin: 0;
+}
+
+.auth-trap {
+    position: absolute;
+    left: -10000px;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+}
+
+.auth-side-card {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    gap: 14px;
+    padding: 28px;
+}
+
+.auth-side-card strong {
+    font-size: 1.8rem;
+    line-height: 1;
+    letter-spacing: -0.04em;
+}
+
+.auth-side-card p {
+    margin: 0;
+}
+
 .page-hero::after {
     content: "";
     position: absolute;
@@ -731,6 +849,7 @@
     .reward-grid,
     .practice-shell,
     .progress-layout,
+    .auth-shell,
     .report-layout {
         grid-template-columns: 1fr;
     }
@@ -743,6 +862,11 @@
 
 @media (max-width: 640px) {
     .page-hero {
+        border-radius: 26px;
+    }
+
+    .auth-card,
+    .auth-side-card {
         border-radius: 26px;
     }
 

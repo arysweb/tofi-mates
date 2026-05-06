@@ -6,6 +6,7 @@
     const clientKeyStorageKey = "panda_client_key";
     const practiceSetTtlMs = 30 * 60 * 1000;
     const reportDraftStorageKey = "panda_problem_report_draft";
+    const csrfToken = document.documentElement.dataset.csrf || "";
 
     if (difficultyPanel) {
         setupDifficultySelector(difficultyPanel);
@@ -100,6 +101,7 @@
                     },
                     body: JSON.stringify({
                         client_key: state.clientKey,
+                        csrf_token: csrfToken,
                         domain: state.domain,
                         subtopic: state.subtopic,
                         difficulty: state.difficulty,
@@ -293,6 +295,7 @@
                         "Content-Type": "application/json",
                     },
                     body: JSON.stringify({
+                        csrf_token: csrfToken,
                         problem_id: problemId,
                         selected_answer: answer,
                     }),
@@ -398,6 +401,7 @@
             const payload = {
                 client_key: getClientKey(),
                 correct_answer: formData.get("correct_answer") || "",
+                csrf_token: csrfToken,
                 details: formData.get("details") || "",
                 difficulty: formData.get("difficulty") || "",
                 domain: formData.get("domain") || "",

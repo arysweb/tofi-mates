@@ -4,6 +4,7 @@ declare(strict_types=1);
 header('Content-Type: application/json; charset=utf-8');
 
 require_once __DIR__ . '/db.php';
+require_once __DIR__ . '/../includes/auth.php';
 
 const PRACTICE_SUBTOPICS = [
     'math' => ['sumar', 'restar', 'comparar', 'problemas'],
@@ -20,14 +21,16 @@ try {
         sendJson(['error' => 'Method not allowed.'], 405);
     }
 
+    $authUser = authRequireUserJson();
     $payload = readJsonPayload();
+    authVerifyCsrf($payload);
     $domain = sanitizeChoice($payload['domain'] ?? $payload['topic'] ?? 'math', array_keys(PRACTICE_SUBTOPICS), 'math');
     $subtopic = sanitizeChoice($payload['subtopic'] ?? PRACTICE_SUBTOPICS[$domain][0], PRACTICE_SUBTOPICS[$domain], PRACTICE_SUBTOPICS[$domain][0]);
     $difficulty = sanitizeChoice($payload['difficulty'] ?? 'easy', PRACTICE_DIFFICULTIES, 'easy');
     $clientKey = sanitizeClientKey($payload['client_key'] ?? null);
     $forceNew = (bool) ($payload['force_new'] ?? false);
 
-    $practiceSet = generatePracticeProblemSet($domain, $subtopic, $difficulty, $clientKey, $forceNew);
+    $practiceSet = generatePracticeProblemSet($domain, $subtopic, $difficulty, $clientKey, $forceNew, (string) $authUser['id']);
     sendJson($practiceSet);
 } catch (Throwable $e) {
     sendJson(['error' => 'No se pudo generar el reto ahora mismo.'], 500);
@@ -55,7 +58,7 @@ function sanitizeClientKey(mixed $value): ?string
     return $clean === '' ? null : substr($clean, 0, 120);
 }
 
-function generatePracticeProblemSet(string $domain, string $subtopic, string $difficulty, ?string $clientKey, bool $forceNew): array
+function generatePracticeProblemSet(string $domain, string $subtopic, string $difficulty, ?string $clientKey, bool $forceNew, string $userId): array
 {
     loadDotEnvFromProjectParent();
     $pdo = null;
@@ -69,7 +72,7 @@ function generatePracticeProblemSet(string $domain, string $subtopic, string $di
     if ($pdo instanceof PDO) {
         try {
             if (!$forceNew && $clientKey !== null) {
-                $recentSet = fetchRecentPracticeSet($pdo, $domain, $subtopic, $difficulty, $clientKey);
+                $recentSet = fetchRecentPracticeSet($pdo, $domain, $subtopic, $difficulty, $clientKey, $userId);
 
                 if ($recentSet !== null && practiceSetIsUsable($recentSet, $domain)) {
                     return $recentSet;
@@ -79,7 +82,7 @@ function generatePracticeProblemSet(string $domain, string $subtopic, string $di
             $cachedProblems = fetchCachedProblems($pdo, $domain, $subtopic, $difficulty);
 
             if (count($cachedProblems) >= 3) {
-                return persistPracticeSet($pdo, $domain, $subtopic, $difficulty, array_slice($cachedProblems, 0, 3), 'cache', $clientKey);
+                return persistPracticeSet($pdo, $domain, $subtopic, $difficulty, array_slice($cachedProblems, 0, 3), 'cache', $clientKey, $userId);
             }
         } catch (Throwable $e) {
             $pdo = null;
@@ -99,7 +102,7 @@ function generatePracticeProblemSet(string $domain, string $subtopic, string $di
         try {
             $bankProblems = storeProblemsInBank($pdo, $domain, $subtopic, $difficulty, $preparedProblems, $finalProvider);
 
-            return persistPracticeSet($pdo, $domain, $subtopic, $difficulty, $bankProblems, $finalProvider, $clientKey);
+            return persistPracticeSet($pdo, $domain, $subtopic, $difficulty, $bankProblems, $finalProvider, $clientKey, $userId);
         } catch (Throwable $e) {
             return buildTransientPracticeSet($preparedProblems, $finalProvider);
         }
@@ -444,12 +447,13 @@ function normalizeProblem(array $data): ?array
     return $problem;
 }
 
-function fetchRecentPracticeSet(PDO $pdo, string $domain, string $subtopic, string $difficulty, string $clientKey): ?array
+function fetchRecentPracticeSet(PDO $pdo, string $domain, string $subtopic, string $difficulty, string $clientKey, string $userId): ?array
 {
     $stmt = $pdo->prepare(
         'SELECT id, provider_name
          FROM practice_sets
          WHERE client_key = :client_key
+           AND user_id = :user_id
            AND domain_slug = :domain_slug
            AND subtopic_slug = :subtopic_slug
            AND difficulty = :difficulty
@@ -459,6 +463,7 @@ function fetchRecentPracticeSet(PDO $pdo, string $domain, string $subtopic, stri
     );
     $stmt->execute([
         ':client_key' => $clientKey,
+        ':user_id' => $userId,
         ':domain_slug' => $domain,
         ':subtopic_slug' => $subtopic,
         ':difficulty' => $difficulty,
@@ -557,14 +562,14 @@ function storeProblemsInBank(PDO $pdo, string $domain, string $subtopic, string 
     return $problems;
 }
 
-function persistPracticeSet(PDO $pdo, string $domain, string $subtopic, string $difficulty, array $problems, string $providerName, ?string $clientKey): array
+function persistPracticeSet(PDO $pdo, string $domain, string $subtopic, string $difficulty, array $problems, string $providerName, ?string $clientKey, string $userId): array
 {
     $pdo->beginTransaction();
 
     try {
         $setStmt = $pdo->prepare(
-            'INSERT INTO practice_sets (domain_slug, subtopic_slug, difficulty, client_key, provider_name)
-             VALUES (:domain_slug, :subtopic_slug, :difficulty, :client_key, :provider_name)
+            'INSERT INTO practice_sets (domain_slug, subtopic_slug, difficulty, client_key, provider_name, user_id)
+             VALUES (:domain_slug, :subtopic_slug, :difficulty, :client_key, :provider_name, :user_id)
              RETURNING id'
         );
         $setStmt->execute([
@@ -573,6 +578,7 @@ function persistPracticeSet(PDO $pdo, string $domain, string $subtopic, string $
             ':difficulty' => $difficulty,
             ':client_key' => $clientKey,
             ':provider_name' => $providerName,
+            ':user_id' => $userId,
         ]);
 
         $setId = (string) $setStmt->fetchColumn();

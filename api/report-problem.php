@@ -4,13 +4,16 @@ declare(strict_types=1);
 header('Content-Type: application/json; charset=utf-8');
 
 require_once __DIR__ . '/db.php';
+require_once __DIR__ . '/../includes/auth.php';
 
 try {
     if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
         sendJson(['error' => 'Method not allowed.'], 405);
     }
 
+    $authUser = authRequireUserJson();
     $payload = readJsonPayload();
+    authVerifyCsrf($payload);
     $reason = trim((string) ($payload['reason'] ?? ''));
     $question = trim((string) ($payload['question'] ?? ''));
 
@@ -18,7 +21,7 @@ try {
         sendJson(['error' => 'Report reason and question are required.'], 422);
     }
 
-    $reportId = saveProblemReport($payload);
+    $reportId = saveProblemReport($payload, $authUser);
     sendJson(['report_id' => $reportId, 'ok' => true]);
 } catch (Throwable $e) {
     sendJson(['error' => 'No se pudo enviar el reporte ahora mismo.'], 500);
@@ -32,7 +35,7 @@ function readJsonPayload(): array
     return is_array($data) ? $data : [];
 }
 
-function saveProblemReport(array $payload): string
+function saveProblemReport(array $payload, array $authUser): string
 {
     $pdo = getDbConnection();
     ensureProblemReportsTable($pdo);
@@ -43,6 +46,7 @@ function saveProblemReport(array $payload): string
         'INSERT INTO problem_reports (
             practice_problem_id,
             practice_set_id,
+            user_id,
             domain_slug,
             subtopic_slug,
             difficulty,
@@ -58,6 +62,7 @@ function saveProblemReport(array $payload): string
         VALUES (
             :practice_problem_id,
             :practice_set_id,
+            :user_id,
             :domain_slug,
             :subtopic_slug,
             :difficulty,
@@ -75,6 +80,7 @@ function saveProblemReport(array $payload): string
     $stmt->execute([
         ':practice_problem_id' => $problemId,
         ':practice_set_id' => $setId,
+        ':user_id' => (string) $authUser['id'],
         ':domain_slug' => sanitizeSlug($payload['domain'] ?? ''),
         ':subtopic_slug' => sanitizeSlug($payload['subtopic'] ?? ''),
         ':difficulty' => sanitizeSlug($payload['difficulty'] ?? ''),
@@ -84,7 +90,7 @@ function saveProblemReport(array $payload): string
         ':options' => json_encode(is_array($payload['options'] ?? null) ? $payload['options'] : [], JSON_UNESCAPED_UNICODE),
         ':correct_answer' => substr(trim((string) ($payload['correct_answer'] ?? '')), 0, 255),
         ':selected_answer' => substr(trim((string) ($payload['selected_answer'] ?? '')), 0, 255),
-        ':reporter_email' => sanitizeEmail($payload['reporter_email'] ?? null),
+        ':reporter_email' => sanitizeEmail($payload['reporter_email'] ?? $authUser['email'] ?? null),
         ':client_key' => substr(preg_replace('/[^a-zA-Z0-9_-]/', '', (string) ($payload['client_key'] ?? '')) ?: '', 0, 120),
     ]);
 
@@ -98,6 +104,7 @@ function ensureProblemReportsTable(PDO $pdo): void
             id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
             practice_problem_id uuid REFERENCES practice_problems(id) ON DELETE SET NULL,
             practice_set_id uuid REFERENCES practice_sets(id) ON DELETE SET NULL,
+            user_id uuid REFERENCES app_users(id) ON DELETE SET NULL,
             domain_slug varchar(60),
             subtopic_slug varchar(80),
             difficulty varchar(24),
@@ -115,7 +122,9 @@ function ensureProblemReportsTable(PDO $pdo): void
     );
     $pdo->exec('ALTER TABLE problem_reports ADD COLUMN IF NOT EXISTS details text');
     $pdo->exec('ALTER TABLE problem_reports ADD COLUMN IF NOT EXISTS reporter_email varchar(255)');
+    $pdo->exec('ALTER TABLE problem_reports ADD COLUMN IF NOT EXISTS user_id uuid REFERENCES app_users(id) ON DELETE SET NULL');
     $pdo->exec('CREATE INDEX IF NOT EXISTS idx_problem_reports_status_created ON problem_reports(status, created_at DESC)');
+    $pdo->exec('CREATE INDEX IF NOT EXISTS idx_problem_reports_user_id ON problem_reports(user_id)');
 }
 
 function normalizeUuid(mixed $value): ?string

@@ -98,3 +98,41 @@
     background: var(--green);
 }
 
+.sidebar-account {
+    display: grid;
+    gap: 12px;
+    margin-top: auto;
+    padding: 14px;
+    border: 1px solid rgba(41, 37, 31, 0.08);
+    border-radius: 22px;
+    background: rgba(255, 255, 255, 0.72);
+}
+
+.sidebar-account strong,
+.sidebar-account span {
+    display: block;
+}
+
+.sidebar-account strong {
+    color: var(--ink);
+    line-height: 1.1;
+}
+
+.sidebar-account span {
+    margin-top: 4px;
+    overflow: hidden;
+    color: var(--muted);
+    font-size: 0.82rem;
+    text-overflow: ellipsis;
+}
+
+.sidebar-account button {
+    width: 100%;
+    min-height: 42px;
+    border: 0;
+    border-radius: 999px;
+    color: #fffaf0;
+    font-weight: 800;
+    background: var(--green);
+}
+

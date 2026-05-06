@@ -7,16 +7,41 @@
         </div>
     </div>
 
-    <p class="nav-label">Aprender</p>
-    <nav class="nav-list">
-        <?php foreach ($pageRoutes as $pageKey => $route): ?>
-            <?php if (isset($route['nav']) && $route['nav'] === false) {
-                continue;
-            } ?>
-            <a class="nav-link <?php echo $currentPage === $pageKey ? 'active' : ''; ?> focus-ring" href="<?php echo $pageKey === 'home' ? 'index.php' : 'index.php?page=' . e($pageKey); ?>">
-                <span class="nav-icon"><?php echo e($route['icon']); ?></span>
-                <?php echo e($route['label']); ?>
+    <?php if ($currentUser === null): ?>
+        <p class="nav-label">Cuenta</p>
+        <nav class="nav-list">
+            <a class="nav-link <?php echo $currentPage === 'login' ? 'active' : ''; ?> focus-ring" href="index.php?page=login">
+                <span class="nav-icon">→</span>
+                Entrar
             </a>
-        <?php endforeach; ?>
-    </nav>
+            <a class="nav-link <?php echo $currentPage === 'register' ? 'active' : ''; ?> focus-ring" href="index.php?page=register">
+                <span class="nav-icon">+</span>
+                Crear cuenta
+            </a>
+        </nav>
+    <?php else: ?>
+        <p class="nav-label">Aprender</p>
+        <nav class="nav-list">
+            <?php foreach ($pageRoutes as $pageKey => $route): ?>
+                <?php if (isset($route['nav']) && $route['nav'] === false) {
+                    continue;
+                } ?>
+                <a class="nav-link <?php echo $currentPage === $pageKey ? 'active' : ''; ?> focus-ring" href="<?php echo $pageKey === 'home' ? 'index.php' : 'index.php?page=' . e($pageKey); ?>">
+                    <span class="nav-icon"><?php echo e($route['icon']); ?></span>
+                    <?php echo e($route['label']); ?>
+                </a>
+            <?php endforeach; ?>
+        </nav>
+
+        <div class="sidebar-account">
+            <div>
+                <strong><?php echo e($currentUser['display_name'] ?? 'Cuenta'); ?></strong>
+                <span><?php echo e($currentUser['email'] ?? ''); ?></span>
+            </div>
+            <form method="post" action="api/auth-logout.php">
+                <input type="hidden" name="csrf_token" value="<?php echo e($csrfToken); ?>">
+                <button class="focus-ring" type="submit">Salir</button>
+            </form>
+        </div>
+    <?php endif; ?>
 </aside>
