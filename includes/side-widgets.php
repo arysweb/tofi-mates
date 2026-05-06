@@ -1,16 +1,17 @@
+<?php $practiceStats = getPracticeStats(); ?>
 <div class="side-stack">
     <article class="panel streak-card">
         <div class="panel-header">
             <div>
-                <h2>Racha</h2>
-                <p>Días seguidos practicando</p>
+                <h2>Actividad real</h2>
+                <p>Datos leídos de la base de datos</p>
             </div>
         </div>
-        <div class="streak-number">12</div>
-        <p>Te faltan 3 días para desbloquear una nueva recompensa.</p>
-        <div class="badge-row">
-            <span class="badge">Pensadora rápida</span>
-            <span class="badge">Súper constancia</span>
+        <div class="streak-number"><?php echo e($practiceStats['total_sets']); ?></div>
+        <p>Grupos de ejercicios preparados hasta ahora.</p>
+        <div class="topic-stats">
+            <span><?php echo e($practiceStats['stored_problems']); ?> ejercicios guardados</span>
+            <span><?php echo e($practiceStats['answers']); ?> respuestas registradas</span>
         </div>
     </article>
 

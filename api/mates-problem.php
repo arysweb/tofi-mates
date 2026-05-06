@@ -22,8 +22,10 @@ try {
     $domain = sanitizeChoice($payload['domain'] ?? $payload['topic'] ?? 'math', array_keys(PRACTICE_SUBTOPICS), 'math');
     $subtopic = sanitizeChoice($payload['subtopic'] ?? PRACTICE_SUBTOPICS[$domain][0], PRACTICE_SUBTOPICS[$domain], PRACTICE_SUBTOPICS[$domain][0]);
     $difficulty = sanitizeChoice($payload['difficulty'] ?? 'easy', PRACTICE_DIFFICULTIES, 'easy');
+    $clientKey = sanitizeClientKey($payload['client_key'] ?? null);
+    $forceNew = (bool) ($payload['force_new'] ?? false);
 
-    $practiceSet = generatePracticeProblemSet($domain, $subtopic, $difficulty);
+    $practiceSet = generatePracticeProblemSet($domain, $subtopic, $difficulty, $clientKey, $forceNew);
     sendJson($practiceSet);
 } catch (Throwable $e) {
     sendJson(['error' => 'No se pudo generar el reto ahora mismo.'], 500);
@@ -44,14 +46,30 @@ function sanitizeChoice(mixed $value, array $allowed, string $fallback): string
     return in_array($clean, $allowed, true) ? $clean : $fallback;
 }
 
-function generatePracticeProblemSet(string $domain, string $subtopic, string $difficulty): array
+function sanitizeClientKey(mixed $value): ?string
+{
+    $clean = preg_replace('/[^a-zA-Z0-9_-]/', '', (string) $value) ?: '';
+
+    return $clean === '' ? null : substr($clean, 0, 120);
+}
+
+function generatePracticeProblemSet(string $domain, string $subtopic, string $difficulty, ?string $clientKey, bool $forceNew): array
 {
     loadDotEnvFromProjectParent();
     $pdo = getDbConnection();
+
+    if (!$forceNew && $clientKey !== null) {
+        $recentSet = fetchRecentPracticeSet($pdo, $domain, $subtopic, $difficulty, $clientKey);
+
+        if ($recentSet !== null) {
+            return $recentSet;
+        }
+    }
+
     $cachedProblems = fetchCachedProblems($pdo, $domain, $subtopic, $difficulty);
 
     if (count($cachedProblems) >= 3) {
-        return persistPracticeSet($pdo, $domain, $subtopic, $difficulty, array_slice($cachedProblems, 0, 3), 'cache');
+        return persistPracticeSet($pdo, $domain, $subtopic, $difficulty, array_slice($cachedProblems, 0, 3), 'cache', $clientKey);
     }
 
     $prompt = buildPracticePrompt($domain, $subtopic, $difficulty);
@@ -61,7 +79,7 @@ function generatePracticeProblemSet(string $domain, string $subtopic, string $di
 
     if ($raw === null) {
         $fallbacks = storeProblemsInBank($pdo, $domain, $subtopic, $difficulty, fallbackPracticeProblems($domain, $subtopic, $difficulty), $providerName);
-        return persistPracticeSet($pdo, $domain, $subtopic, $difficulty, $fallbacks, $providerName);
+        return persistPracticeSet($pdo, $domain, $subtopic, $difficulty, $fallbacks, $providerName, $clientKey);
     }
 
     $problems = parseProblemSetJson($raw);
@@ -74,7 +92,7 @@ function generatePracticeProblemSet(string $domain, string $subtopic, string $di
         $problems === null ? 'local' : $providerName
     );
 
-    return persistPracticeSet($pdo, $domain, $subtopic, $difficulty, $bankProblems, $problems === null ? 'local' : $providerName);
+    return persistPracticeSet($pdo, $domain, $subtopic, $difficulty, $bankProblems, $problems === null ? 'local' : $providerName, $clientKey);
 }
 
 function buildPracticePrompt(string $domain, string $subtopic, string $difficulty): string
@@ -89,7 +107,7 @@ function buildPracticePrompt(string $domain, string $subtopic, string $difficult
         . 'The difference between difficulties must be very pronounced. Easy must still be real practice, not baby work. Medium must require thinking. Hard must require two steps or deeper reasoning where the subject allows it. '
         . 'Use warm, simple Spanish. Do not mention AI, backend, JSON, prompts, levels, points, stars, shops, missions, or rewards. '
         . 'Keep each question short. Keep each explanation in 2 or 3 very short sentences, with one idea per sentence. '
-        . 'The explanation must explain the math only; do not start it with praise like "Muy bien" or "Qué bien". '
+        . 'The explanation must explain the reasoning only; do not start it with praise like "Muy bien" or "Qué bien". '
         . 'Respond ONLY in valid JSON, no markdown, no code fences, no extra text. '
         . 'Use this exact structure: '
         . '{"problems":[{"question":"...","type":"multiple_choice","options":["...","...","...","..."],"correct_answer":"...","hint":"...","explanation":"..."}]} '
@@ -326,6 +344,35 @@ function normalizeProblem(array $data): ?array
     return $problem;
 }
 
+function fetchRecentPracticeSet(PDO $pdo, string $domain, string $subtopic, string $difficulty, string $clientKey): ?array
+{
+    $stmt = $pdo->prepare(
+        'SELECT id, provider_name
+         FROM practice_sets
+         WHERE client_key = :client_key
+           AND domain_slug = :domain_slug
+           AND subtopic_slug = :subtopic_slug
+           AND difficulty = :difficulty
+           AND created_at >= now() - interval \'30 minutes\'
+         ORDER BY created_at DESC
+         LIMIT 1'
+    );
+    $stmt->execute([
+        ':client_key' => $clientKey,
+        ':domain_slug' => $domain,
+        ':subtopic_slug' => $subtopic,
+        ':difficulty' => $difficulty,
+    ]);
+
+    $row = $stmt->fetch();
+
+    if (!is_array($row)) {
+        return null;
+    }
+
+    return fetchPracticeSet($pdo, (string) $row['id'], (string) ($row['provider_name'] ?? 'recent'));
+}
+
 function fetchCachedProblems(PDO $pdo, string $domain, string $subtopic, string $difficulty): array
 {
     $stmt = $pdo->prepare(
@@ -388,20 +435,21 @@ function storeProblemsInBank(PDO $pdo, string $domain, string $subtopic, string 
     return $problems;
 }
 
-function persistPracticeSet(PDO $pdo, string $domain, string $subtopic, string $difficulty, array $problems, string $providerName): array
+function persistPracticeSet(PDO $pdo, string $domain, string $subtopic, string $difficulty, array $problems, string $providerName, ?string $clientKey): array
 {
     $pdo->beginTransaction();
 
     try {
         $setStmt = $pdo->prepare(
-            'INSERT INTO practice_sets (domain_slug, subtopic_slug, difficulty, provider_name)
-             VALUES (:domain_slug, :subtopic_slug, :difficulty, :provider_name)
+            'INSERT INTO practice_sets (domain_slug, subtopic_slug, difficulty, client_key, provider_name)
+             VALUES (:domain_slug, :subtopic_slug, :difficulty, :client_key, :provider_name)
              RETURNING id'
         );
         $setStmt->execute([
             ':domain_slug' => $domain,
             ':subtopic_slug' => $subtopic,
             ':difficulty' => $difficulty,
+            ':client_key' => $clientKey,
             ':provider_name' => $providerName,
         ]);
 

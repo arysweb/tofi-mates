@@ -44,7 +44,7 @@ function saveMatesAnswer(string $problemId, string $selectedAnswer): array
 
     try {
         $problemStmt = $pdo->prepare(
-            'SELECT correct_answer, explanation
+            'SELECT practice_set_id, correct_answer, explanation
              FROM practice_problems
              WHERE id = :id'
         );
@@ -60,6 +60,10 @@ function saveMatesAnswer(string $problemId, string $selectedAnswer): array
         $answerStmt = $pdo->prepare(
             'INSERT INTO practice_answers (practice_problem_id, selected_answer, is_correct)
              VALUES (:practice_problem_id, :selected_answer, :is_correct)
+             ON CONFLICT (practice_problem_id) DO UPDATE SET
+                selected_answer = EXCLUDED.selected_answer,
+                is_correct = EXCLUDED.is_correct,
+                answered_at = now()
              RETURNING id'
         );
         $answerStmt->execute([
@@ -69,6 +73,7 @@ function saveMatesAnswer(string $problemId, string $selectedAnswer): array
         ]);
 
         $answerId = (string) $answerStmt->fetchColumn();
+        markPracticeSetCompletedIfAnswered($pdo, (string) $problem['practice_set_id']);
         $pdo->commit();
 
         return [
@@ -84,6 +89,27 @@ function saveMatesAnswer(string $problemId, string $selectedAnswer): array
 
         throw $e;
     }
+}
+
+function markPracticeSetCompletedIfAnswered(PDO $pdo, string $practiceSetId): void
+{
+    $stmt = $pdo->prepare(
+        'UPDATE practice_sets
+         SET completed_at = now()
+         WHERE id = :practice_set_id
+           AND completed_at IS NULL
+           AND (
+                SELECT count(*)
+                FROM practice_problems
+                WHERE practice_set_id = :practice_set_id
+           ) = (
+                SELECT count(*)
+                FROM practice_problems pp
+                INNER JOIN practice_answers pa ON pa.practice_problem_id = pp.id
+                WHERE pp.practice_set_id = :practice_set_id
+           )'
+    );
+    $stmt->execute([':practice_set_id' => $practiceSetId]);
 }
 
 function sendJson(array $payload, int $status = 200): void

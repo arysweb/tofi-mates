@@ -1,6 +1,7 @@
 <!doctype html>
 <html lang="es">
 <?php
+require __DIR__ . '/includes/practice-stats.php';
 require __DIR__ . '/includes/page-data.php';
 
 $currentPage = isset($_GET['page']) ? preg_replace('/[^a-z-]/', '', $_GET['page']) : 'home';

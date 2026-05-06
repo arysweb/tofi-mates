@@ -1,3 +1,10 @@
+<?php
+$practiceStats = getPracticeStats();
+$weeklyCounts = $practiceStats['weekly_counts'];
+$maxWeeklyCount = max(1, ...array_values($weeklyCounts));
+$weekDays = [1 => 'Lun', 2 => 'Mar', 3 => 'Mié', 4 => 'Jue', 5 => 'Vie', 6 => 'Sáb', 7 => 'Dom'];
+$recentSets = $practiceStats['recent_sets'];
+?>
 <section class="content">
     <?php require __DIR__ . '/topbar.php'; ?>
 
@@ -5,13 +12,13 @@
         <div>
             <span class="eyebrow"><span class="dot"></span> Vista para familia</span>
             <h2>Pequeños avances, bien visibles.</h2>
-            <p>Un resumen front-end del ritmo semanal, temas practicados y recompensas conseguidas. Más adelante puede conectarse con datos reales.</p>
+            <p>Resumen conectado a los grupos, ejercicios y respuestas guardadas en la base de datos.</p>
         </div>
 
         <div class="reward-total-card">
             <small>Esta semana</small>
-            <strong>34</strong>
-            <span>retos completados</span>
+            <strong><?php echo e($practiceStats['week_sets']); ?></strong>
+            <span>grupos preparados</span>
         </div>
     </section>
 
@@ -20,18 +27,18 @@
             <div class="panel-header">
                 <div>
                     <h2>Actividad semanal</h2>
-                    <p>Práctica por día, sin depender de lecciones fijas.</p>
+                    <p>Práctica por día, calculada con grupos reales.</p>
                 </div>
             </div>
 
             <div class="progress-bars">
-                <div><span>Lun</span><strong style="height: 70%"></strong><em>7</em></div>
-                <div><span>Mar</span><strong style="height: 84%"></strong><em>9</em></div>
-                <div><span>Mié</span><strong style="height: 48%"></strong><em>5</em></div>
-                <div><span>Jue</span><strong style="height: 30%"></strong><em>3</em></div>
-                <div><span>Vie</span><strong style="height: 62%"></strong><em>6</em></div>
-                <div><span>Sáb</span><strong style="height: 40%"></strong><em>4</em></div>
-                <div><span>Dom</span><strong style="height: 0%"></strong><em>0</em></div>
+                <?php foreach ($weekDays as $dayNumber => $dayLabel): ?>
+                    <?php
+                    $count = $weeklyCounts[$dayNumber] ?? 0;
+                    $height = max(8, (int) round(($count / $maxWeeklyCount) * 84));
+                    ?>
+                    <div><span><?php echo e($dayLabel); ?></span><strong style="height: <?php echo e($height); ?>%"></strong><em><?php echo e($count); ?></em></div>
+                <?php endforeach; ?>
             </div>
         </div>
 
@@ -44,9 +51,9 @@
                     </div>
                 </div>
                 <div class="topic-stats">
-                    <span>Mates · 14 retos</span>
-                    <span>Lógica · 9 retos</span>
-                    <span>Dinero · 7 retos</span>
+                    <?php foreach ($practiceStats['domain_counts'] as $domain => $count): ?>
+                        <span><?php echo e(practiceDomainLabel($domain)); ?> · <?php echo e($count); ?> grupos</span>
+                    <?php endforeach; ?>
                 </div>
             </article>
 
@@ -57,7 +64,7 @@
                         <p>Días con práctica completada.</p>
                     </div>
                 </div>
-                <div class="streak-number">12</div>
+                <div class="streak-number"><?php echo e($practiceStats['streak_days']); ?></div>
             </article>
         </aside>
     </section>
@@ -66,14 +73,21 @@
         <div class="panel-header">
             <div>
                 <h2>Historial reciente</h2>
-                <p>Últimos retos completados en la maqueta front-end.</p>
+                <p>Últimos grupos preparados y guardados.</p>
             </div>
         </div>
 
         <div class="history-list">
-            <div><span>+</span><strong>Mates · Restar</strong><em>5/5 correcto</em></div>
-            <div><span>?</span><strong>Lógica · Series</strong><em>4/5 correcto</em></div>
-            <div><span>$</span><strong>Dinero · Cambio</strong><em>3/5 correcto</em></div>
+            <?php if ($recentSets === []): ?>
+                <div><span>+</span><strong>Sin grupos todavía</strong><em>Genera el primer reto</em></div>
+            <?php endif; ?>
+            <?php foreach ($recentSets as $set): ?>
+                <div>
+                    <span><?php echo e(substr(practiceDomainLabel((string) $set['domain_slug']), 0, 1)); ?></span>
+                    <strong><?php echo e(practiceDomainLabel((string) $set['domain_slug'])); ?> · <?php echo e(practiceSubtopicLabel((string) $set['subtopic_slug'])); ?></strong>
+                    <em><?php echo e((string) $set['difficulty']); ?></em>
+                </div>
+            <?php endforeach; ?>
         </div>
     </section>
 </section>

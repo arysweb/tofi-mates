@@ -1,8 +1,8 @@
 <aside class="sidebar" aria-label="Navegación de aprendizaje">
     <div class="brand">
-        <div class="brand-mark">T</div>
+        <div class="brand-mark">S</div>
         <div>
-            <p class="brand-title">TofiMates</p>
+            <p class="brand-title">Sparkle</p>
             <p class="brand-subtitle">Pequeños logros cada día</p>
         </div>
     </div>

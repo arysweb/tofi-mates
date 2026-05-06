@@ -1,6 +1,9 @@
 (function () {
     const difficultyPanel = document.querySelector("[data-mates-difficulty]");
     const practiceShell = document.querySelector("[data-practice='true']");
+    const difficultyStorageKey = "sparkle_mates_difficulty";
+    const clientKeyStorageKey = "sparkle_client_key";
+    const practiceSetTtlMs = 30 * 60 * 1000;
 
     if (difficultyPanel) {
         setupDifficultySelector(difficultyPanel);
@@ -13,7 +16,7 @@
     function setupDifficultySelector(panel) {
         const buttons = Array.from(panel.querySelectorAll("[data-difficulty]"));
         const links = Array.from(document.querySelectorAll("[data-mates-practice-link]"));
-        const savedDifficulty = localStorage.getItem("tofimates_mates_difficulty") || "easy";
+        const savedDifficulty = localStorage.getItem(difficultyStorageKey) || "easy";
 
         setDifficulty(savedDifficulty);
 
@@ -24,7 +27,7 @@
         });
 
         function setDifficulty(difficulty) {
-            localStorage.setItem("tofimates_mates_difficulty", difficulty);
+            localStorage.setItem(difficultyStorageKey, difficulty);
 
             buttons.forEach((button) => {
                 button.classList.toggle("active", button.dataset.difficulty === difficulty);
@@ -40,23 +43,34 @@
 
     async function setupMatesPractice(shell) {
         const state = {
-            difficulty: shell.dataset.difficulty || localStorage.getItem("tofimates_mates_difficulty") || "easy",
+            difficulty: shell.dataset.difficulty || localStorage.getItem(difficultyStorageKey) || "easy",
             domain: shell.dataset.domain || "math",
             problems: [],
             setId: null,
             subtopic: shell.dataset.subtopic || "sumar",
+            clientKey: getClientKey(),
         };
+        const practiceStorageKey = [
+            "sparkle_practice_set",
+            state.domain,
+            state.subtopic,
+            state.difficulty,
+        ].join(":");
 
         const problemsList = shell.querySelector("[data-problems-list]");
         const hint = shell.querySelector("[data-problem-hint]");
         const status = shell.querySelector("[data-practice-status]");
         const nextProblem = shell.querySelector("[data-next-problem]");
 
-        nextProblem?.addEventListener("click", () => loadProblemSet());
+        nextProblem?.addEventListener("click", () => loadProblemSet(true));
 
-        await loadProblemSet();
+        await loadProblemSet(false);
 
-        async function loadProblemSet() {
+        async function loadProblemSet(forceNew) {
+            if (!forceNew && restoreSavedProblemSet()) {
+                return;
+            }
+
             setLoading(true);
 
             try {
@@ -66,9 +80,11 @@
                         "Content-Type": "application/json",
                     },
                     body: JSON.stringify({
+                        client_key: state.clientKey,
                         domain: state.domain,
                         subtopic: state.subtopic,
                         difficulty: state.difficulty,
+                        force_new: forceNew,
                     }),
                 });
 
@@ -80,12 +96,68 @@
 
                 state.problems = data.problems;
                 state.setId = data.set_id || null;
+                saveProblemSet(data);
                 renderProblemSet(data.problems);
             } catch (error) {
                 showError();
             } finally {
                 setLoading(false);
             }
+        }
+
+        function restoreSavedProblemSet() {
+            const saved = readSavedProblemSet();
+
+            if (!saved) {
+                return false;
+            }
+
+            state.problems = saved.problems;
+            state.setId = saved.set_id || null;
+            renderProblemSet(saved.problems);
+            return true;
+        }
+
+        function readSavedProblemSet() {
+            try {
+                const saved = JSON.parse(sessionStorage.getItem(practiceStorageKey) || "null");
+
+                if (!saved || !Array.isArray(saved.problems) || saved.problems.length === 0) {
+                    return null;
+                }
+
+                if (Date.now() - Number(saved.saved_at || 0) > practiceSetTtlMs) {
+                    sessionStorage.removeItem(practiceStorageKey);
+                    return null;
+                }
+
+                return saved;
+            } catch (error) {
+                sessionStorage.removeItem(practiceStorageKey);
+                return null;
+            }
+        }
+
+        function saveProblemSet(data) {
+            sessionStorage.setItem(practiceStorageKey, JSON.stringify({
+                problems: data.problems,
+                provider: data.provider || null,
+                saved_at: Date.now(),
+                set_id: data.set_id || null,
+            }));
+        }
+
+        function getClientKey() {
+            const saved = localStorage.getItem(clientKeyStorageKey);
+
+            if (saved) {
+                return saved;
+            }
+
+            const key = "kid_" + Date.now().toString(36) + "_" + Math.random().toString(36).slice(2, 10);
+            localStorage.setItem(clientKeyStorageKey, key);
+
+            return key;
         }
 
         function renderProblemSet(problems) {
